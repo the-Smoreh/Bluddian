@@ -6,6 +6,7 @@ import { Sheet } from '@/components/Sheet';
 import { Icon } from '@/components/Icon';
 import { useToast } from '@/components/Toast';
 import { useVault } from '@/components/VaultGate';
+import { Connections } from '@/components/Connections';
 import { useDb } from '@/lib/local/useStore';
 import { setSettings } from '@/lib/local/actions';
 import { exportJson, flush, importJson } from '@/lib/local/store';
@@ -103,6 +104,9 @@ export default function SettingsPage() {
           />
         </div>
       </div>
+
+      {/* ------------------------------------------------------ connections */}
+      <Connections />
 
       {/* --------------------------------------------------------- security */}
       <SectionTitle>Lock</SectionTitle>
