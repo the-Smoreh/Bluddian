@@ -3,32 +3,44 @@
 /**
  * Bluddian service worker.
  *
- * Caching strategy is chosen per resource type, and the rule that matters most
- * is the one about your data:
+ * This app has no backend, so the service worker's job is simple and total:
+ * cache the entire app shell so it launches instantly and works with the radio
+ * off. Every byte it caches is application code — your actual data never passes
+ * through here, because it never goes over the network at all. It lives
+ * encrypted in IndexedDB, which the Cache API cannot see.
  *
- *   - Static build output (/_next/static, icons): cache-first. Content-hashed,
- *     so it can never go stale.
- *   - Navigations (HTML): network-first, falling back to a cached shell, then
- *     to /offline. You always see live numbers when you have signal.
- *   - API responses: NEVER cached. Revenue, credentials and session state are
- *     exactly the things that must not be served from a stale local copy, and
- *     caching authenticated responses is how a service worker leaks data.
+ * Strategy:
+ *   - App shell + build output: cache-first, since Next fingerprints filenames.
+ *   - Navigations: cache-first with a background refresh, so launching offline
+ *     is indistinguishable from launching online.
  */
 
-const VERSION = 'v1';
-const STATIC_CACHE = `bluddian-static-${VERSION}`;
-const PAGE_CACHE = `bluddian-pages-${VERSION}`;
-const OFFLINE_URL = '/offline';
+const VERSION = 'v2-local';
+const CACHE = `bluddian-${VERSION}`;
 
-const PRECACHE = [OFFLINE_URL, '/icons/icon-192.png', '/manifest.webmanifest'];
+// Rewritten by scripts/postbuild.mjs for sub-path deploys (GitHub Pages).
+const BASE_PATH = '';
+
+const PRECACHE = [
+  '/',
+  '/money/',
+  '/build/',
+  '/goals/',
+  '/claude/',
+  '/settings/',
+  '/offline/',
+  '/manifest.webmanifest',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+].map((p) => `${BASE_PATH}${p}`);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
-      .open(STATIC_CACHE)
-      .then((cache) => cache.addAll(PRECACHE))
-      // Don't let one missing file block the whole install.
-      .catch(() => undefined)
+      .open(CACHE)
+      // addAll is all-or-nothing; add individually so one 404 can't abort the
+      // install and leave the app with no offline shell at all.
+      .then((cache) => Promise.all(PRECACHE.map((url) => cache.add(url).catch(() => undefined))))
       .then(() => self.skipWaiting()),
   );
 });
@@ -39,9 +51,7 @@ self.addEventListener('activate', (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys
-            .filter((key) => key.startsWith('bluddian-') && !key.endsWith(VERSION))
-            .map((key) => caches.delete(key)),
+          keys.filter((k) => k.startsWith('bluddian-') && k !== CACHE).map((k) => caches.delete(k)),
         ),
       )
       .then(() => self.clients.claim()),
@@ -50,74 +60,54 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-
-  // Only ever handle our own origin.
   if (url.origin !== self.location.origin) return;
 
-  // Hard rule: never cache API traffic or auth pages.
-  if (
-    url.pathname.startsWith('/api/') ||
-    url.pathname.startsWith('/login') ||
-    url.pathname.startsWith('/setup')
-  ) {
-    return;
-  }
-
-  // Content-hashed build output: cache-first is safe and fast.
-  if (url.pathname.startsWith('/_next/static') || url.pathname.startsWith('/icons/')) {
-    event.respondWith(cacheFirst(request));
-    return;
-  }
-
-  // Page navigations: always try the network so numbers are current.
-  if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(request));
-  }
+  event.respondWith(handle(request));
 });
 
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
+async function handle(request) {
+  const cached = await caches.match(request, { ignoreSearch: true });
+
+  if (cached) {
+    // Serve instantly, then quietly refresh for next launch.
+    void revalidate(request);
+    return cached;
+  }
 
   try {
     const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(STATIC_CACHE);
+    if (response.ok && response.type === 'basic') {
+      const cache = await caches.open(CACHE);
       cache.put(request, response.clone());
     }
     return response;
   } catch {
-    return new Response('', { status: 504, statusText: 'Offline' });
+    // A navigation with nothing cached is the only real offline failure.
+    if (request.mode === 'navigate') {
+      const shell = await caches.match(`${BASE_PATH}/`);
+      if (shell) return shell;
+      const offline = await caches.match(`${BASE_PATH}/offline/`);
+      if (offline) return offline;
+    }
+    return new Response('Offline', { status: 503, headers: { 'content-type': 'text/plain' } });
   }
 }
 
-async function networkFirst(request) {
+async function revalidate(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(PAGE_CACHE);
-      cache.put(request, response.clone());
+    if (response.ok && response.type === 'basic') {
+      const cache = await caches.open(CACHE);
+      await cache.put(request, response);
     }
-    return response;
   } catch {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-
-    const offline = await caches.match(OFFLINE_URL);
-    if (offline) return offline;
-
-    return new Response('Offline', {
-      status: 503,
-      headers: { 'content-type': 'text/plain' },
-    });
+    /* offline; the cached copy stands */
   }
 }
 
-/** Lets a future update prompt the page to activate immediately. */
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });

@@ -1,139 +1,146 @@
 # Bluddian
 
-A private founder dashboard that installs on your phone. Tracks the money coming
-in from **Whop** and **Shopify**, what **Claude** is costing you, the products and
-courses you're building, and the goals you're chasing — with XP, levels, streaks
-and quests layered on top, because a number you check every morning beats a
-spreadsheet you open twice.
+A private founder dashboard that runs **entirely on your phone**. Tracks revenue
+from Whop and Shopify, what Claude costs you, the products and courses you're
+building, and the money goals you're chasing — with XP, levels, streaks and
+quests on top, because a number you check every morning beats a spreadsheet you
+open twice.
 
-Built as an installable **PWA**: on a Pixel it lands on your home screen with its
-own icon, runs full-screen, and works offline. No Play Store, no sideloading.
-
----
-
-## Why a PWA and not a native app
-
-The important reason is security. Your Anthropic, Whop and Shopify keys have to
-live somewhere. In a native app they'd be shipped inside the APK on the device,
-where anyone with the file can pull them out. Here they live on **your server**,
-encrypted, and the phone only ever sees rendered numbers.
-
-The convenience reasons are secondary but real: one codebase, instant updates
-with no store review, and installation is two taps in Chrome.
+**There is no server and no account.** Your phone is the database. Nothing is
+uploaded, nothing syncs to a cloud, and there is no login to be breached —
+because there is nothing on the other end to log in to.
 
 ---
+
+## How it works
+
+The app is a static site — plain HTML, CSS and JavaScript. Install it to your
+home screen from Chrome and it behaves like any other Android app: own icon,
+full screen, works with the radio off.
+
+All your data lives in your phone's IndexedDB storage as a **single
+AES-256-GCM-encrypted blob**. The key that decrypts it is unlocked by your
+fingerprint (or face, or the device PIN) using the WebAuthn PRF extension, so
+your fingerprint genuinely performs the decryption rather than just hiding a
+screen. A recovery PIN unlocks the same key as a backup.
+
+```
+your fingerprint ─┐
+                  ├─→ unwraps the data key ─→ decrypts the database
+your recovery PIN ┘
+```
+
+Either factor opens the vault, and changing one never re-encrypts your history.
 
 ## Quick start
 
 ```bash
 npm install
-npm run keygen      # generates .env.local with your encryption key + setup code
-npm run icons       # generates the launcher icons (already committed)
-npm run dev         # http://localhost:3000
+npm run build     # produces ./out — a folder of static files
+npm run serve     # http://localhost:3000
 ```
 
-Open the app, and the first screen asks you to create the one and only account.
-It'll want the setup code that `keygen` printed.
-
-Then go to **Settings → Connections** and add whichever platforms you use. None
-are required — you can log sales by hand and the whole app still works.
+Open it, set a recovery PIN, and you're running. Turn on fingerprint unlock in
+Settings.
 
 ## Getting it on your Pixel
 
-1. Deploy somewhere with **HTTPS** (see below). A service worker won't install
-   over plain HTTP, so the phone install flow needs a real certificate.
-2. Open the site in Chrome on the phone.
-3. **⋮ → Add to Home screen** → Install.
+You need to serve the `out/` folder over **HTTPS** — both service workers and
+fingerprint unlock require a secure origin.
 
-It now behaves like any other app: own icon, own task-switcher entry, full
-screen, offline shell, and three long-press shortcuts (Log a sale, Goals, Claude).
+**Easiest:** drag `out/` onto [Cloudflare Pages](https://pages.dev) or
+[Netlify Drop](https://app.netlify.com/drop). Free, instant, gives you an HTTPS
+URL at a root domain.
 
-## Deploying
+**Or GitHub Pages:** enable Pages (Settings → Pages → Source: GitHub Actions).
+The included workflow builds and deploys on every push to `main`, and sets the
+sub-path automatically.
 
-The app is a standard Next.js server plus a SQLite file. It needs a **persistent
-disk** — SQLite is a file, so anywhere ephemeral (like a plain serverless
-platform) will silently lose your data on redeploy.
+Then on your phone:
 
-Good fits: Fly.io with a volume, Railway, Render, a $5 VPS with Caddy in front,
-or a Raspberry Pi at home behind Tailscale.
+1. Open the URL in Chrome.
+2. **⋮ → Add to Home screen** → Install.
+3. Open it from the home screen, set your PIN, enable fingerprint unlock.
 
-Whatever you pick, set these:
+Do step 3 from the **installed** app rather than the browser tab — Android grants
+permanent storage more readily to installed apps, which stops it clearing your
+data when space runs low. Settings will warn you if that hasn't been granted.
 
-| Variable | Why |
-|---|---|
-| `APP_ENCRYPTION_KEY` | **Required.** Encrypts your stored API keys. Losing it means re-entering them; changing it makes existing ones unreadable. |
-| `SETUP_CODE` | Stops a stranger claiming the dashboard between deploy and your first login. Remove after signing up. |
-| `DATABASE_PATH` | Point at your persistent volume, e.g. `/data/bluddian.db`. |
-| `TRUST_PROXY=1` | Set **only** behind a proxy you control. See the note in `.env.example` — getting this wrong in either direction weakens rate limiting. |
+> Publishing the site publicly is fine: it contains only the app's code. Your
+> data never leaves your phone, so there is nothing on the server to expose. The
+> repo itself is worth keeping private, since it reveals which platforms you
+> sell on.
 
-Back up the database file. It holds every sale, goal, and encrypted key you have.
+## Getting your numbers in
 
----
+### Whop and Shopify — CSV import
 
-## Should this repo be private?
+Both platforms' order APIs are server-only: browsers are refused by CORS, by
+design. With no server in this architecture, their **export files** are the way
+in, and it's a fair trade — no API key to store, nothing to leak, works offline.
 
-You asked, so: **yes, make it private** — but not for the reason you might think.
+- **Shopify:** Admin → Orders → Export → plain CSV
+- **Whop:** Dashboard → Payments → Export
 
-There are no secrets in this code. Keys live in `.env.local` and in the database,
-both of which are gitignored, and the app is built so a plaintext key is never
-returned by any endpoint. Publishing the source would not leak a credential.
+Then **Money → Import**. Columns are matched by name across a list of known
+aliases, so it survives their periodic renames. You get a preview with the row
+count, the total and the matched columns before anything is written.
 
-Make it private anyway, because the repo tells people **which** platforms you
-sell on, what your product pipeline looks like, and where your dashboard is
-deployed. That's business intelligence about you, and it's free reconnaissance
-for anyone who fancies a run at your accounts.
+Re-importing the same file is safe — orders are keyed by their platform ID and
+duplicates are skipped rather than doubling your revenue.
 
-On GitHub: **Settings → General → Danger Zone → Change repository visibility**.
+### Claude spend — manual
 
-If the repo was ever public with a real key committed, rotating that key is the
-only fix — deleting the commit does not remove it from forks or caches.
+Anthropic's usage API needs an organisation admin key and also can't be called
+from a browser. Check your console once a week and type the number in; it takes
+ten seconds and keeps this app free of any credential worth stealing.
 
----
+### Everything else — manual
 
-## How the tracking works
-
-### Claude
-Uses the Anthropic **Admin API** (`/v1/organizations/usage_report/messages` and
-`/cost_report`) for token counts and authoritative dollar amounts. That needs an
-admin key (`sk-ant-admin…`), which only an org owner can create — so if you can't
-mint one, log spend manually and everything else still works. Manual entries are
-stored separately from synced rows and are never overwritten by a sync.
-
-### Whop
-Pulls products and payments from the v5 REST API. Field names are read
-defensively with fallbacks, because Whop's payload shape varies by account.
-
-### Shopify
-Uses the Admin **GraphQL** API for orders and products. Also accepts order
-webhooks for real-time updates.
-
-### Idempotency
-Every synced row has a `UNIQUE(platform, external_id)`. Re-running a sync updates
-rows rather than inserting them again — double-counted revenue would make the
-whole dashboard lie, so this is enforced at the database level, not in code.
+Cash, invoices, Stripe links, coaching calls. The **+** button on Money. Plenty
+of real income never touches a platform API, and a dashboard that could only see
+APIs would under-report what you actually make.
 
 ## The game layer
 
 XP comes from **real outcomes only** — shipping a product (+400), publishing a
-lesson (+75 each), logging a sale (scaled by size), completing a quest, hitting a
-goal. Nothing rewards opening the app, because a dashboard that pays you to check
-it is a slot machine.
+lesson (+75 each), logging a sale (scaled by size, capped), completing a quest,
+hitting a goal. Nothing rewards opening the app, because a dashboard that pays
+you to check it is a slot machine.
 
-Levels cost 25% more each time. Streaks count days with real activity, not
-launches. Undoing a completed quest claws the XP back so the counter can't be
-farmed.
+Levels cost 25% more each time. Streaks count days with real activity. Undoing a
+completed quest claws the XP back, so the counter can't be farmed.
+
+## Backups
+
+**Settings → Export backup** writes a JSON file. Do this occasionally.
+
+Your data exists in exactly one place. If you lose the phone, reset it, or clear
+the app's storage, it's gone — that's the flip side of nothing being uploaded.
+The export deliberately excludes API keys and is **not encrypted**, so put it
+somewhere you'd be comfortable putting a bank statement.
 
 ## Commands
 
 ```bash
-npm run dev        # dev server
-npm run build      # production build
-npm run start      # production server
+npm run dev        # dev server with hot reload
+npm run build      # static export to ./out
+npm run serve      # serve ./out locally
 npm run typecheck  # tsc --noEmit
-npm run keygen     # generate .env.local (refuses to overwrite)
-npm run icons      # regenerate PWA icons
-npm run db:reset   # delete the database (asks first)
+npm run icons      # regenerate the PWA launcher icons
 ```
 
-See [SECURITY.md](./SECURITY.md) for the threat model and what's actually
-protecting your data.
+## What's inside
+
+```
+src/lib/local/     the whole engine — vault, crypto, store, selectors, CSV
+src/components/    presentational UI + the unlock gate
+src/app/           one client component per screen
+```
+
+No server code, no database driver, no ORM, no chart library, no state-management
+library. Charts are hand-rolled SVG; state is a plain object with
+`useSyncExternalStore`.
+
+See [SECURITY.md](./SECURITY.md) for the threat model and exactly what protects
+your data.
