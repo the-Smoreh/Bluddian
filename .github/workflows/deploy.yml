@@ -36,14 +36,34 @@ jobs:
 
       - run: npm run typecheck
 
-      # GitHub Pages serves project sites from /<repo>/, so the app needs to
-      # know its base path. Deploying to a root domain instead? Drop this env.
+      # GitHub Pages serves project sites from /<repo>/, so the app must know
+      # its base path. A user site (<owner>.github.io) is served from the root
+      # and needs an empty one. Computed in shell so it works for every trigger
+      # type, not just push events.
+      - name: Work out the base path
+        id: base
+        run: |
+          REPO="${GITHUB_REPOSITORY#*/}"
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          OWNER_LOWER="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          REPO_LOWER="$(echo "$REPO" | tr '[:upper:]' '[:lower:]')"
+          if [ "$REPO_LOWER" = "${OWNER_LOWER}.github.io" ]; then
+            echo "path=" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=/$REPO" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build
         run: npm run build
         env:
-          BASE_PATH: ${{ github.event.repository.name != format('{0}.github.io', github.repository_owner) && format('/{0}', github.event.repository.name) || '' }}
+          BASE_PATH: ${{ steps.base.outputs.path }}
 
+      # enablement:true turns Pages on via the API, so there is no settings
+      # switch to flip by hand before the first deploy.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
