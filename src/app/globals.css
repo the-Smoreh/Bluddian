@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Bluddian is a deliberately dark, single-theme app. It's a phone dashboard you
+ * check at 6am and 11pm; a light mode would be a second design to maintain for
+ * a screen that's almost never bright. color-scheme tells the OS to render
+ * form controls and scrollbars to match.
+ */
+:root {
+  color-scheme: dark;
+
+  --c-ink: 8 8 12;
+  --c-surface: 18 18 24;
+  --c-raised: 26 26 34;
+  --c-line: 38 38 48;
+  --c-fg: 242 242 245;
+  --c-muted: 154 154 168;
+  --c-faint: 98 98 111;
+
+  --c-brand: 124 92 255;
+  --c-brand2: 34 211 238;
+  --c-gold: 245 181 68;
+  --c-good: 52 211 153;
+  --c-warn: 251 191 36;
+  --c-bad: 248 113 113;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /*
+   * Data-viz roles, kept separate from UI colors so charts are colored by the
+   * job the color does, not by whatever the nearest button uses.
+   *
+   * --series-* are the categorical slots, stepped for a dark surface and
+   * validated as a set against #121218: worst all-pairs CVD ΔE 9.4, worst
+   * normal-vision ΔE 20.9, all >= 3:1 contrast. Do not add a 4th slot without
+   * re-running the validator — beyond three, fold the tail into "Other".
+   *
+   * Money and cost each get ONE hue, because every time-series in this app is a
+   * single series. They are never plotted on shared axes.
+   */
+  --series-1: #3987e5; /* blue   — Whop      */
+  --series-2: #d95926; /* orange — manual    */
+  --series-3: #199e70; /* aqua   — Shopify   */
+
+  --viz-money: 245 181 68; /* gold, revenue */
+  --viz-cost: 144 133 233; /* violet, Claude spend */
+  --viz-track: 38 38 48; /* meter/grid track */
+  --viz-grid: 255 255 255;
+
+  /* Android gesture bar / status bar insets. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-h: 4.25rem;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background: rgb(var(--c-ink));
+  color: rgb(var(--c-fg));
+  font-family: var(--font-sans);
+  /* Prevent iOS/Android pull-to-refresh fighting the scroll containers. */
+  overscroll-behavior-y: none;
+}
+
+body {
+  /* Subtle depth so pure-black OLED doesn't look flat. */
+  background-image:
+    radial-gradient(900px 500px at 15% -10%, rgb(var(--c-brand) / 0.12), transparent 65%),
+    radial-gradient(700px 400px at 95% 0%, rgb(var(--c-brand2) / 0.07), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Nothing in a dashboard should be text-selectable-by-accident on touch,
+   except the values you might want to copy. */
+button,
+a,
+label {
+  user-select: none;
+}
+
+::selection {
+  background: rgb(var(--c-brand) / 0.35);
+}
+
+/* Thin scrollbars for the desktop case; invisible on mobile anyway. */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--c-line));
+  border-radius: 99px;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl2 border border-line/80 bg-surface/80 backdrop-blur-xl;
+  }
+
+  .card-pad {
+    @apply card p-4;
+  }
+
+  /* Minimum 44px touch targets throughout — this is a thumb-driven app. */
+  .btn {
+    @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-xl px-4
+           text-sm font-semibold transition active:scale-[.97] disabled:opacity-40
+           disabled:active:scale-100;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand text-white shadow-lg shadow-brand/25 hover:bg-brand/90;
+  }
+
+  .btn-ghost {
+    @apply btn border border-line bg-raised/60 text-fg hover:bg-raised;
+  }
+
+  .btn-danger {
+    @apply btn border border-bad/40 bg-bad/10 text-bad hover:bg-bad/20;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-line bg-raised/70 px-3.5 py-3 text-[15px] text-fg
+           placeholder:text-faint focus:border-brand/70 focus:outline-none focus:ring-2
+           focus:ring-brand/25;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-raised/70
+           px-2.5 py-1 text-xs font-medium text-muted;
+  }
+
+  .hairline {
+    @apply border-line/70;
+  }
+
+  /* Tabular figures stop money values jittering as they animate/update. */
+  .nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+}
+
+/* Respect the OS setting — the app has a lot of motion by design. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

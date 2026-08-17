@@ -1,0 +1,38 @@
+# ---- SECRETS: never commit these ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# ---- Local database (contains your revenue + encrypted keys) ----
+data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# ---- Build output ----
+.next/
+out/
+build/
+dist/
+
+# ---- Deps ----
+node_modules/
+.pnp
+.pnp.js
+
+# ---- Misc ----
+.DS_Store
+*.log
+npm-debug.log*
+yarn-error.log*
+.vercel
+.idea/
+.vscode/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
