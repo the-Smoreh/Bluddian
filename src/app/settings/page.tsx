@@ -94,7 +94,9 @@ export default function SettingsPage() {
       <SectionTitle>You</SectionTitle>
       <div className="card-pad space-y-3">
         <div>
-          <label className="label" htmlFor="name">Display name</label>
+          <label className="label" htmlFor="name">
+            Display name
+          </label>
           <input
             id="name"
             className="input"
@@ -148,7 +150,9 @@ export default function SettingsPage() {
           onClick={() => setPinOpen(true)}
           className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-raised/50"
         >
-          <span className="text-faint"><Icon name="lock" size={18} /></span>
+          <span className="text-faint">
+            <Icon name="lock" size={18} />
+          </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium">Change PIN</span>
             <span className="block text-xs text-faint">Your recovery key if biometrics fail</span>
@@ -157,7 +161,9 @@ export default function SettingsPage() {
         </button>
 
         <div className="flex items-center gap-3 px-4 py-3.5">
-          <span className="text-faint"><Icon name="clock" size={18} /></span>
+          <span className="text-faint">
+            <Icon name="clock" size={18} />
+          </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium">Auto-lock</span>
             <span className="block text-xs text-faint">Lock after inactivity</span>
@@ -181,8 +187,10 @@ export default function SettingsPage() {
           onClick={lock}
           className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-raised/50"
         >
-          <span className="text-brand"><Icon name="logout" size={18} /></span>
-          <span className="flex-1 text-sm font-medium text-brand">Lock now</span>
+          <span className="text-fg">
+            <Icon name="logout" size={18} />
+          </span>
+          <span className="flex-1 text-sm font-medium text-fg">Lock now</span>
         </button>
       </div>
 
@@ -209,7 +217,9 @@ export default function SettingsPage() {
           onClick={backup}
           className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-raised/50"
         >
-          <span className="text-faint"><Icon name="package" size={18} /></span>
+          <span className="text-faint">
+            <Icon name="package" size={18} />
+          </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium">Export backup</span>
             <span className="block text-xs text-faint">
@@ -235,7 +245,9 @@ export default function SettingsPage() {
           onClick={() => fileRef.current?.click()}
           className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-raised/50"
         >
-          <span className="text-faint"><Icon name="refresh" size={18} /></span>
+          <span className="text-faint">
+            <Icon name="refresh" size={18} />
+          </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium">Restore from backup</span>
             <span className="block text-xs text-faint">Replaces everything currently here</span>
@@ -258,7 +270,9 @@ export default function SettingsPage() {
           }}
           className="card mt-3 flex w-full items-start gap-3 border-warn/40 bg-warn/5 p-4 text-left"
         >
-          <span className="mt-0.5 text-warn"><Icon name="shield" size={18} /></span>
+          <span className="mt-0.5 text-warn">
+            <Icon name="shield" size={18} />
+          </span>
           <span>
             <span className="block text-sm font-semibold text-warn">Storage not protected yet</span>
             <span className="mt-1 block text-xs text-muted">
@@ -279,10 +293,14 @@ export default function SettingsPage() {
         onClick={() => setWipeOpen(true)}
         className="card flex w-full items-center gap-3 border-bad/30 p-4 text-left transition active:bg-bad/10"
       >
-        <span className="text-bad"><Icon name="trash" size={18} /></span>
+        <span className="text-bad">
+          <Icon name="trash" size={18} />
+        </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-medium text-bad">Erase everything</span>
-          <span className="block text-xs text-faint">Deletes the vault and all data on this phone</span>
+          <span className="block text-xs text-faint">
+            Deletes the vault and all data on this phone
+          </span>
         </span>
       </button>
 
@@ -327,7 +345,9 @@ function PinSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
     <Sheet open={open} onClose={onClose} title="Change PIN">
       <form onSubmit={submit} className="space-y-4 pb-2">
         <div>
-          <label className="label" htmlFor="new-pin">New PIN</label>
+          <label className="label" htmlFor="new-pin">
+            New PIN
+          </label>
           <input
             id="new-pin"
             className="input text-center text-2xl tracking-[0.4em] nums"
@@ -340,7 +360,9 @@ function PinSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
           />
         </div>
         <div>
-          <label className="label" htmlFor="new-pin-confirm">Confirm</label>
+          <label className="label" htmlFor="new-pin-confirm">
+            Confirm
+          </label>
           <input
             id="new-pin-confirm"
             className="input text-center text-2xl tracking-[0.4em] nums"
@@ -375,7 +397,9 @@ function WipeSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
           copy and no undo. Export a backup first if you might want any of it later.
         </p>
         <div>
-          <label className="label" htmlFor="wipe-confirm">Type ERASE to confirm</label>
+          <label className="label" htmlFor="wipe-confirm">
+            Type ERASE to confirm
+          </label>
           <input
             id="wipe-confirm"
             className="input"
@@ -411,9 +435,11 @@ function InstallHint() {
   if (installed) return null;
 
   return (
-    <div className="card mt-6 border-brand/30 bg-brand/5 p-4">
+    <div className="card mt-6 border-line-strong bg-raised/40 p-4">
       <div className="flex items-start gap-3">
-        <span className="text-brand"><Icon name="home" size={18} /></span>
+        <span className="text-fg">
+          <Icon name="home" size={18} />
+        </span>
         <div>
           <p className="text-sm font-semibold">Put this on your home screen</p>
           <p className="mt-1 text-sm text-muted">

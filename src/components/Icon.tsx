@@ -111,7 +111,9 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M8 10.5V7.5a4 4 0 1 1 8 0v3" />
     </>
   ),
-  trash: <path d="M4.5 7h15M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2M6.5 7l.8 12a2 2 0 0 0 2 1.9h5.4a2 2 0 0 0 2-1.9L17.5 7M10.5 11v6M13.5 11v6" />,
+  trash: (
+    <path d="M4.5 7h15M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2M6.5 7l.8 12a2 2 0 0 0 2 1.9h5.4a2 2 0 0 0 2-1.9L17.5 7M10.5 11v6M13.5 11v6" />
+  ),
   chevronRight: <path d="m9.5 5 7 7-7 7" />,
   chevronDown: <path d="m5 9.5 7 7 7-7" />,
   cart: (
@@ -135,7 +137,9 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.6-1.6" />
     </>
   ),
-  logout: <path d="M15 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2M11 12h10M18 9l3 3-3 3" />,
+  logout: (
+    <path d="M15 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2M11 12h10M18 9l3 3-3 3" />
+  ),
   wifiOff: (
     <>
       <path d="M3 3l18 18" />

@@ -177,9 +177,18 @@ function evaluateAchievements(draft: Database): string[] {
   check(revenue >= 100_000, 'rev_1k');
   check(revenue >= 1_000_000, 'rev_10k');
   check(revenue >= 10_000_000, 'rev_100k');
-  check(draft.products.some((p) => p.status === 'live' && p.kind !== 'course'), 'first_product');
-  check(draft.products.some((p) => p.status === 'live' && p.kind === 'course'), 'first_course');
-  check(draft.goals.some((g) => g.status === 'done'), 'goal_done');
+  check(
+    draft.products.some((p) => p.status === 'live' && p.kind !== 'course'),
+    'first_product',
+  );
+  check(
+    draft.products.some((p) => p.status === 'live' && p.kind === 'course'),
+    'first_course',
+  );
+  check(
+    draft.goals.some((g) => g.status === 'done'),
+    'goal_done',
+  );
 
   const platforms = new Set(paid.map((s) => s.platform));
   check(platforms.has('whop') && platforms.has('shopify'), 'multi_platform');
@@ -230,10 +239,7 @@ function withRewards(
 
   return {
     awardedXp: awarded,
-    levelUp:
-      afterLevel > beforeLevel
-        ? { level: afterLevel, title: rankTitle(afterLevel) }
-        : null,
+    levelUp: afterLevel > beforeLevel ? { level: afterLevel, title: rankTitle(afterLevel) } : null,
     unlocked,
     completedGoals: completed,
   };
@@ -342,7 +348,16 @@ export function addProduct(input: NewProduct): MutationResult {
 export type ProductPatch = Partial<
   Pick<
     Product,
-    'name' | 'kind' | 'status' | 'priceCents' | 'currency' | 'url' | 'notes' | 'lessonsTotal' | 'lessonsDone' | 'students'
+    | 'name'
+    | 'kind'
+    | 'status'
+    | 'priceCents'
+    | 'currency'
+    | 'url'
+    | 'notes'
+    | 'lessonsTotal'
+    | 'lessonsDone'
+    | 'students'
   >
 >;
 
@@ -416,7 +431,9 @@ export function addGoal(input: NewGoal): MutationResult {
 export function nudgeGoal(id: string, delta: number): MutationResult {
   return withRewards((draft) => {
     draft.goals = draft.goals.map((g) =>
-      g.id === id ? { ...g, manualValue: Math.max(0, g.manualValue + delta), updatedAt: Date.now() } : g,
+      g.id === id
+        ? { ...g, manualValue: Math.max(0, g.manualValue + delta), updatedAt: Date.now() }
+        : g,
     );
     return {};
   });
@@ -431,9 +448,24 @@ export function deleteGoal(id: string): void {
 // ---------------------------------------------------------------- quests --
 
 const DAILY_TEMPLATES = [
-  { title: 'Ship something', detail: 'Move any product or lesson forward today.', xp: 60, target: 1 },
-  { title: 'Talk to a customer', detail: 'One real conversation. DM, email, call.', xp: 50, target: 1 },
-  { title: 'Post to sell', detail: 'One piece of content pointing at an offer.', xp: 40, target: 1 },
+  {
+    title: 'Ship something',
+    detail: 'Move any product or lesson forward today.',
+    xp: 60,
+    target: 1,
+  },
+  {
+    title: 'Talk to a customer',
+    detail: 'One real conversation. DM, email, call.',
+    xp: 50,
+    target: 1,
+  },
+  {
+    title: 'Post to sell',
+    detail: 'One piece of content pointing at an offer.',
+    xp: 40,
+    target: 1,
+  },
 ];
 
 const WEEKLY_TEMPLATES = [
@@ -467,12 +499,26 @@ export function ensureQuests(): Quest[] {
     const additions: Quest[] = [];
     for (const t of DAILY_TEMPLATES) {
       if (!kept.some((q) => q.title === t.title && q.periodKey === day)) {
-        additions.push({ id: newId(), ...t, cadence: 'daily', progress: 0, periodKey: day, completedAt: null });
+        additions.push({
+          id: newId(),
+          ...t,
+          cadence: 'daily',
+          progress: 0,
+          periodKey: day,
+          completedAt: null,
+        });
       }
     }
     for (const t of WEEKLY_TEMPLATES) {
       if (!kept.some((q) => q.title === t.title && q.periodKey === week)) {
-        additions.push({ id: newId(), ...t, cadence: 'weekly', progress: 0, periodKey: week, completedAt: null });
+        additions.push({
+          id: newId(),
+          ...t,
+          cadence: 'weekly',
+          progress: 0,
+          periodKey: week,
+          completedAt: null,
+        });
       }
     }
 
@@ -573,14 +619,23 @@ export function setSettings(patch: Partial<Database['settings']>): void {
   });
 }
 
-export function recordSync(provider: string, status: 'ok' | 'error', message: string, items = 0): void {
+export function recordSync(
+  provider: string,
+  status: 'ok' | 'error',
+  message: string,
+  items = 0,
+): void {
   update((draft) => {
     draft.syncs = { ...draft.syncs, [provider]: { at: Date.now(), status, message, items } };
   });
 }
 
 /** Bulk insert from a CSV import, skipping rows already present. */
-export function importSales(rows: NewSale[]): { added: number; skipped: number; result: MutationResult } {
+export function importSales(rows: NewSale[]): {
+  added: number;
+  skipped: number;
+  result: MutationResult;
+} {
   const state = requireState();
   const seen = new Set(
     state.sales.filter((s) => s.externalId).map((s) => `${s.platform}:${s.externalId}`),

@@ -92,11 +92,17 @@ export function Fab({ onClick, label }: { onClick: () => void; label: string }) 
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-2xl
-                 bg-brand text-white shadow-xl shadow-brand/30 transition active:scale-95"
-      style={{ bottom: 'calc(var(--nav-h) + var(--safe-bottom) + 1rem)' }}
+      // Dark glyph on the light surface. When the primary colour became white,
+      // the inherited text-white left this button with an invisible icon.
+      className="fixed right-4 z-40 flex h-13 w-13 items-center justify-center rounded-full
+                 bg-fg text-ink shadow-lg shadow-black/50 transition active:scale-95"
+      style={{
+        bottom: 'calc(var(--nav-h) + var(--safe-bottom) + 1rem)',
+        height: '3.25rem',
+        width: '3.25rem',
+      }}
     >
-      <Icon name="plus" size={24} />
+      <Icon name="plus" size={22} />
     </button>
   );
 }

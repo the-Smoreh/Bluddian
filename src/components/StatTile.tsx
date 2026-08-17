@@ -2,9 +2,13 @@ import { Icon, type IconName } from '@/components/Icon';
 import { Sparkline } from '@/components/charts/TrendChart';
 
 /**
- * A stat tile IS the chart when the answer is one number. Adding a plot behind
- * every number would be decoration; the optional sparkline is here only to give
- * a number a direction, never to be read for values.
+ * A stat tile IS the chart when the answer is one number.
+ *
+ * Redesigned to stop shouting: the label is small and quiet, the number is
+ * large and neutral, and colour appears only where it means something. The
+ * previous version tinted every value gold, which spent the strongest signal
+ * in the palette on "this is a number" — leaving nothing to say "this is
+ * money".
  */
 export function StatTile({
   label,
@@ -24,34 +28,30 @@ export function StatTile({
   tone?: 'default' | 'money' | 'cost' | 'good';
   spark?: number[];
 }) {
-  const valueColor =
-    tone === 'money'
-      ? 'text-gold'
-      : tone === 'cost'
-        ? 'text-brand'
-        : tone === 'good'
-          ? 'text-good'
-          : 'text-fg';
+  // Only the headline money figure earns gold. Supporting values stay neutral
+  // so the eye lands on the one that matters.
+  const valueColor = tone === 'money' ? 'text-gold' : 'text-fg';
 
   return (
-    <div className="card-pad">
-      <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-xs font-semibold uppercase tracking-wider text-muted">{label}</p>
+    <div className="card px-3.5 py-3">
+      <div className="flex items-center gap-1.5">
         {icon ? (
           <span className="shrink-0 text-faint">
-            <Icon name={icon} size={15} />
+            <Icon name={icon} size={13} />
           </span>
         ) : null}
+        <p className="metric-label truncate">{label}</p>
       </div>
 
-      <p className={`mt-1.5 text-[1.65rem] font-bold leading-none tracking-tight nums ${valueColor}`}>
-        {value}
-      </p>
+      <p className={`stat mt-2 ${valueColor}`}>{value}</p>
 
-      <div className="mt-2 flex items-end justify-between gap-2">
+      <div className="mt-1.5 flex items-end justify-between gap-2">
         <div className="min-w-0">
-          {sub ? <p className="truncate text-xs text-faint">{sub}</p> : null}
-          {delta !== undefined && delta !== null ? <Delta value={delta} /> : null}
+          {delta !== undefined && delta !== null ? (
+            <Delta value={delta} />
+          ) : sub ? (
+            <p className="truncate text-[0.75rem] text-faint">{sub}</p>
+          ) : null}
         </div>
         {spark && spark.length > 1 ? (
           <Sparkline data={spark} tone={tone === 'cost' ? 'cost' : 'money'} />
@@ -62,23 +62,22 @@ export function StatTile({
 }
 
 /**
- * Direction is carried by an arrow icon and a sign, not by color alone — the
- * color is reinforcement for readers who can use it.
+ * Direction is carried by an arrow and a sign, not by colour alone — colour is
+ * reinforcement for readers who can use it.
  */
 function Delta({ value }: { value: number }) {
   const up = value >= 0;
   return (
     <span
-      className={`mt-1 inline-flex items-center gap-1 text-xs font-semibold ${
+      className={`inline-flex items-center gap-1 text-[0.75rem] font-medium ${
         up ? 'text-good' : 'text-bad'
       }`}
     >
-      <Icon name={up ? 'trendUp' : 'trendDown'} size={13} />
+      <Icon name={up ? 'trendUp' : 'trendDown'} size={12} />
       <span className="nums">
         {up ? '+' : ''}
         {value.toFixed(0)}%
       </span>
-      <span className="font-normal text-faint">vs last month</span>
     </span>
   );
 }

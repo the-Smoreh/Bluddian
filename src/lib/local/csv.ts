@@ -79,7 +79,12 @@ export function parseCsv(text: string): string[][] {
 // ------------------------------------------------------- column matching --
 
 function findColumn(headers: string[], aliases: string[]): number {
-  const normalised = headers.map((h) => h.trim().toLowerCase().replace(/[\s_-]+/g, ''));
+  const normalised = headers.map((h) =>
+    h
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, ''),
+  );
   for (const alias of aliases) {
     const target = alias.toLowerCase().replace(/[\s_-]+/g, '');
     const exact = normalised.indexOf(target);
@@ -144,7 +149,15 @@ const COLUMNS = {
   total: ['total', 'amount', 'final amount', 'total price', 'subtotal', 'gross', 'paid'],
   currency: ['currency', 'presentment currency'],
   status: ['financial status', 'status', 'payment status', 'state'],
-  product: ['lineitem name', 'product', 'product title', 'plan', 'item', 'description', 'product name'],
+  product: [
+    'lineitem name',
+    'product',
+    'product title',
+    'plan',
+    'item',
+    'description',
+    'product name',
+  ],
   email: ['email', 'customer email', 'user email', 'buyer email'],
   fees: ['fee', 'fees', 'whop fee', 'application fee', 'processing fee'],
   refund: ['refunded amount', 'refund', 'refunded', 'total refunded'],
@@ -201,7 +214,7 @@ export function buildImportPreview(text: string, platform: Platform): ImportPrev
   }
 
   if (idx.date === -1) {
-    warnings.push("No date column found — every row will be dated today.");
+    warnings.push('No date column found — every row will be dated today.');
   }
 
   const cell = (row: string[], position: number): string =>
@@ -249,7 +262,8 @@ export function buildImportPreview(text: string, platform: Platform): ImportPrev
     out.push({
       platform,
       externalId,
-      productName: cell(row, idx.product) || `${platform} order${externalId ? ` ${externalId}` : ''}`,
+      productName:
+        cell(row, idx.product) || `${platform} order${externalId ? ` ${externalId}` : ''}`,
       grossCents: gross,
       feesCents: toCents(cell(row, idx.fees)),
       refundCents: refund,
@@ -267,7 +281,10 @@ export function buildImportPreview(text: string, platform: Platform): ImportPrev
   return {
     platform,
     rows: out,
-    totalCents: out.reduce((sum, r) => sum + (r.grossCents - (r.feesCents ?? 0) - (r.refundCents ?? 0)), 0),
+    totalCents: out.reduce(
+      (sum, r) => sum + (r.grossCents - (r.feesCents ?? 0) - (r.refundCents ?? 0)),
+      0,
+    ),
     skipped,
     warnings,
     detectedColumns,

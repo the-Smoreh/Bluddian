@@ -15,7 +15,7 @@ export function Meter({
 }: {
   value: number;
   max: number;
-  tone?: 'money' | 'cost' | 'good' | 'brand';
+  tone?: 'money' | 'cost' | 'good' | 'accent';
   height?: number;
   /** Accessible description; the visible number lives next to the meter. */
   label?: string;
@@ -31,7 +31,7 @@ export function Meter({
         ? 'rgb(var(--viz-cost))'
         : tone === 'good'
           ? 'rgb(var(--c-good))'
-          : 'rgb(var(--c-brand))';
+          : 'rgb(var(--c-accent))';
 
   return (
     <div
@@ -48,8 +48,6 @@ export function Meter({
         style={{
           width: `${pct}%`,
           background: fill,
-          // A faint glow reads as "energy" without thickening the mark itself.
-          boxShadow: pct > 0 ? `0 0 12px -2px ${fill}` : undefined,
         }}
       />
     </div>
@@ -63,21 +61,26 @@ export function Meter({
 export function SegmentMeter({
   filled,
   total,
-  tone = '#f5b544',
+  tone = 'rgb(232 179 65)',
 }: {
   filled: number;
   total: number;
   tone?: string;
 }) {
   return (
-    <div className="flex gap-1" role="meter" aria-valuenow={filled} aria-valuemin={0} aria-valuemax={total}>
+    <div
+      className="flex gap-1"
+      role="meter"
+      aria-valuenow={filled}
+      aria-valuemin={0}
+      aria-valuemax={total}
+    >
       {Array.from({ length: total }, (_, i) => (
         <span
           key={i}
           className="h-1.5 flex-1 rounded-full transition-colors"
           style={{
             background: i < filled ? tone : 'rgb(var(--viz-track))',
-            boxShadow: i < filled ? `0 0 8px -3px ${tone}` : undefined,
           }}
         />
       ))}

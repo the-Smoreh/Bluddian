@@ -11,7 +11,12 @@ import { useToast } from '@/components/Toast';
 import { ImportSheet } from '@/components/ImportSheet';
 import { useDb } from '@/lib/local/useStore';
 import { addSale, deleteSale } from '@/lib/local/actions';
-import { productsWithStats, revenueByDay, revenueByPlatform, revenueSummary } from '@/lib/local/selectors';
+import {
+  productsWithStats,
+  revenueByDay,
+  revenueByPlatform,
+  revenueSummary,
+} from '@/lib/local/selectors';
 import { fmtMoney, fmtNumber, parseMoneyToCents, relativeTime } from '@/lib/money';
 
 export default function MoneyPage() {
@@ -138,7 +143,11 @@ export default function MoneyPage() {
           detail="Import a Whop or Shopify order export, or log your first sale by hand."
           action={
             <div className="flex w-full gap-2">
-              <button type="button" onClick={() => setImportOpen(true)} className="btn-ghost flex-1">
+              <button
+                type="button"
+                onClick={() => setImportOpen(true)}
+                className="btn-ghost flex-1"
+              >
                 Import CSV
               </button>
               <button type="button" onClick={() => setAddOpen(true)} className="btn-primary flex-1">
@@ -161,7 +170,7 @@ export default function MoneyPage() {
                     {s.isRecurring ? (
                       <>
                         <span>·</span>
-                        <span className="text-brand">recurring</span>
+                        <span className="text-fg">recurring</span>
                       </>
                     ) : null}
                     {s.feesCents > 0 ? (
@@ -213,7 +222,9 @@ export default function MoneyPage() {
       <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Log a sale">
         <form onSubmit={submit} className="space-y-4 pb-2">
           <div>
-            <label className="label" htmlFor="amount">Amount received</label>
+            <label className="label" htmlFor="amount">
+              Amount received
+            </label>
             <input
               id="amount"
               className="input text-2xl font-bold nums"
@@ -227,7 +238,9 @@ export default function MoneyPage() {
 
           {products.length > 0 ? (
             <div>
-              <label className="label" htmlFor="product">Product</label>
+              <label className="label" htmlFor="product">
+                Product
+              </label>
               <select
                 id="product"
                 className="input"
@@ -260,7 +273,9 @@ export default function MoneyPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="label" htmlFor="fees">Fees</label>
+              <label className="label" htmlFor="fees">
+                Fees
+              </label>
               <input
                 id="fees"
                 className="input nums"
@@ -271,7 +286,9 @@ export default function MoneyPage() {
               />
             </div>
             <div>
-              <label className="label" htmlFor="date">Date</label>
+              <label className="label" htmlFor="date">
+                Date
+              </label>
               <input
                 id="date"
                 type="date"
@@ -283,12 +300,16 @@ export default function MoneyPage() {
           </div>
 
           <div>
-            <label className="label" htmlFor="platform">Platform</label>
+            <label className="label" htmlFor="platform">
+              Platform
+            </label>
             <select
               id="platform"
               className="input"
               value={form.platform}
-              onChange={(e) => setForm({ ...form, platform: e.target.value as typeof form.platform })}
+              onChange={(e) =>
+                setForm({ ...form, platform: e.target.value as typeof form.platform })
+              }
             >
               <option value="manual">Manual / other</option>
               <option value="whop">Whop</option>
@@ -299,7 +320,7 @@ export default function MoneyPage() {
           <label className="flex items-center gap-3 rounded-xl border border-line bg-raised/50 px-3.5 py-3">
             <input
               type="checkbox"
-              className="h-5 w-5 accent-[rgb(var(--c-brand))]"
+              className="h-5 w-5 accent-[rgb(var(--c-fg))]"
               checked={form.isRecurring}
               onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })}
             />

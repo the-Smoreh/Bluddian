@@ -67,10 +67,7 @@ function AutoSync() {
       const failed = Object.entries(results).filter(([, r]) => !r.ok);
 
       if (added > 0) {
-        toast.success(
-          `${added} new sale${added === 1 ? '' : 's'}`,
-          'Pulled in automatically',
-        );
+        toast.success(`${added} new sale${added === 1 ? '' : 's'}`, 'Pulled in automatically');
       }
       for (const [id, result] of failed) {
         toast.error(`${id} sync failed`, result.message);

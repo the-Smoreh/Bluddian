@@ -75,8 +75,12 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
 /**
- * Draws the launcher icon: a rounded tile with a violet→cyan diagonal gradient
- * and three ascending bars — the "revenue going up" mark.
+ * Draws the launcher icon: an off-white tile with three ascending bars, the
+ * tallest in gold — the same "money going up" mark, in the app's own language.
+ *
+ * A light tile is deliberate. The app is near-black, and a near-black launcher
+ * icon disappears against dark wallpapers; a light tile stays legible on any
+ * background and matches the app-mark shown on the lock screen.
  *
  * `inset` shrinks the artwork for the maskable variant, which Android may crop
  * to a circle; the safe zone is the inner 80%.
@@ -121,12 +125,9 @@ function drawIcon(size, { maskable = false } = {}) {
       );
       if (coverage <= 0) continue;
 
-      // Diagonal gradient: #7c5cff -> #22d3ee
-      const t = clamp01((x / size) * 0.55 + (y / size) * 0.45);
-      const r = Math.round(lerp(124, 34, t));
-      const g = Math.round(lerp(92, 211, t));
-      const b = Math.round(lerp(255, 238, t));
-      set(x, y, r, g, b, coverage);
+      // Flat off-white. No gradient — the gradient was decoration and it read
+      // as generated rather than designed.
+      set(x, y, 250, 250, 250, coverage);
     }
   }
 
@@ -140,16 +141,22 @@ function drawIcon(size, { maskable = false } = {}) {
   const heights = [area * 0.24, area * 0.4, area * 0.56];
   const barRadius = barW * 0.28;
 
+  // Ink for the first two bars, gold for the tallest: the same rule the app
+  // follows — gold marks money, and the tallest bar is the win.
+  const INK = [16, 16, 18];
+  const GOLD = [232, 179, 65];
+
   heights.forEach((h, i) => {
     const left = startX + i * (barW + gap);
     const right = left + barW;
     const top = baseY - h;
+    const [r, g, b] = i === heights.length - 1 ? GOLD : INK;
 
     for (let y = Math.floor(top) - 1; y < Math.ceil(baseY) + 1; y++) {
       for (let x = Math.floor(left) - 1; x < Math.ceil(right) + 1; x++) {
         if (x < 0 || y < 0 || x >= size || y >= size) continue;
         const coverage = roundedRectCoverage(x + 0.5, y + 0.5, left, top, right, baseY, barRadius);
-        if (coverage > 0) set(x, y, 255, 255, 255, coverage * 0.97);
+        if (coverage > 0) set(x, y, r, g, b, coverage);
       }
     }
   });

@@ -124,7 +124,8 @@ export async function createVault(pin: string): Promise<CryptoKey> {
 export class VaultError extends Error {
   constructor(
     message: string,
-    readonly code: 'no-vault' | 'wrong-pin' | 'locked' | 'no-biometric' | 'cancelled' | 'unsupported',
+    readonly code:
+      'no-vault' | 'wrong-pin' | 'locked' | 'no-biometric' | 'cancelled' | 'unsupported',
     readonly retryAfterMs = 0,
   ) {
     super(message);
@@ -141,11 +142,7 @@ export async function unlockWithPin(pin: string): Promise<CryptoKey> {
     throw new VaultError('Too many attempts.', 'locked', remaining);
   }
 
-  const kek = await deriveKeyFromPin(
-    pin,
-    fromB64(meta.pin.salt!),
-    meta.pin.rounds,
-  );
+  const kek = await deriveKeyFromPin(pin, fromB64(meta.pin.salt!), meta.pin.rounds);
 
   try {
     const dek = await unwrapDek(meta.pin, kek);
@@ -230,8 +227,7 @@ export async function enrolBiometric(dek: CryptoKey): Promise<void> {
   }
 
   // Registration may not return the PRF output; a follow-up assertion always does.
-  const prfOutput =
-    ext.prf.results?.first ?? (await evaluatePrf(credential.rawId, prfSalt));
+  const prfOutput = ext.prf.results?.first ?? (await evaluatePrf(credential.rawId, prfSalt));
 
   const kek = await deriveKeyFromPrf(prfOutput);
 

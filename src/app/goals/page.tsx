@@ -42,10 +42,12 @@ export default function GoalsPage() {
       <PageHeader title="Goals" subtitle="Call your shots, then go hit them." />
 
       <section className="card overflow-hidden">
-        <div className="bg-gradient-to-br from-brand/20 to-transparent px-4 py-4">
+        <div className="px-4 py-4">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl
-                            bg-gradient-to-br from-brand to-brand2 text-white shadow-lg shadow-brand/25">
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl
+                            bg-fg text-ink"
+            >
               <span className="text-xl font-black nums">{level.level}</span>
             </div>
             <div className="min-w-0 flex-1">
@@ -58,7 +60,7 @@ export default function GoalsPage() {
             <Meter
               value={level.intoLevel}
               max={level.needed}
-              tone="brand"
+              tone="accent"
               height={9}
               label={`Progress to level ${level.level + 1}`}
             />
@@ -136,7 +138,13 @@ export default function GoalsPage() {
               </div>
 
               <div className="mt-3">
-                <Meter value={g.current} max={g.targetValue} tone="money" height={11} label={g.title} />
+                <Meter
+                  value={g.current}
+                  max={g.targetValue}
+                  tone="money"
+                  height={11}
+                  label={g.title}
+                />
               </div>
 
               <div className="mt-2 flex items-baseline justify-between">
@@ -157,10 +165,18 @@ export default function GoalsPage() {
 
               {g.kind === 'custom' ? (
                 <div className="mt-3 flex gap-2">
-                  <button type="button" onClick={() => bump(g, -1)} className="btn-ghost h-9 min-h-0 flex-1 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => bump(g, -1)}
+                    className="btn-ghost h-9 min-h-0 flex-1 text-xs"
+                  >
                     −1
                   </button>
-                  <button type="button" onClick={() => bump(g, 1)} className="btn-ghost h-9 min-h-0 flex-1 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => bump(g, 1)}
+                    className="btn-ghost h-9 min-h-0 flex-1 text-xs"
+                  >
                     +1
                   </button>
                 </div>
@@ -195,11 +211,16 @@ export default function GoalsPage() {
           const at = db.achievements[a.code];
           const has = Boolean(at);
           return (
-            <div key={a.code} className={`card p-3.5 ${has ? 'border-gold/40 bg-gold/5' : 'opacity-70'}`}>
+            <div
+              key={a.code}
+              className={`card p-3.5 ${has ? 'border-gold/40 bg-gold/5' : 'opacity-70'}`}
+            >
               <span className={has ? 'text-gold' : 'text-faint'}>
                 <Icon name={has ? 'trophy' : 'lock'} size={18} />
               </span>
-              <p className={`mt-2 text-sm font-bold ${has ? 'text-gold' : 'text-muted'}`}>{a.name}</p>
+              <p className={`mt-2 text-sm font-bold ${has ? 'text-gold' : 'text-muted'}`}>
+                {a.name}
+              </p>
               <p className="mt-0.5 text-xs leading-snug text-faint">{a.detail}</p>
               {has ? <p className="mt-1.5 text-[11px] text-faint">{relativeTime(at)}</p> : null}
             </div>
@@ -218,7 +239,7 @@ export default function GoalsPage() {
                   <span className="block text-xs text-faint">{relativeTime(e.createdAt)}</span>
                 </span>
                 <span
-                  className={`shrink-0 text-sm font-bold nums ${e.amount >= 0 ? 'text-brand' : 'text-bad'}`}
+                  className={`shrink-0 text-sm font-bold nums ${e.amount >= 0 ? 'text-fg' : 'text-bad'}`}
                 >
                   {e.amount >= 0 ? '+' : ''}
                   {e.amount}
@@ -311,7 +332,9 @@ function GoalSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
         </div>
 
         <div>
-          <label className="label" htmlFor="g-title">Goal</label>
+          <label className="label" htmlFor="g-title">
+            Goal
+          </label>
           <input
             id="g-title"
             className="input"
@@ -325,7 +348,9 @@ function GoalSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label" htmlFor="g-kind">Measure</label>
+            <label className="label" htmlFor="g-kind">
+              Measure
+            </label>
             <select
               id="g-kind"
               className="input"
@@ -339,7 +364,9 @@ function GoalSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
             </select>
           </div>
           <div>
-            <label className="label" htmlFor="g-target">Target</label>
+            <label className="label" htmlFor="g-target">
+              Target
+            </label>
             <input
               id="g-target"
               className="input nums"
@@ -354,7 +381,9 @@ function GoalSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label" htmlFor="g-period">Window</label>
+            <label className="label" htmlFor="g-period">
+              Window
+            </label>
             <select
               id="g-period"
               className="input"
@@ -369,7 +398,9 @@ function GoalSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
             </select>
           </div>
           <div>
-            <label className="label" htmlFor="g-deadline">Deadline</label>
+            <label className="label" htmlFor="g-deadline">
+              Deadline
+            </label>
             <input
               id="g-deadline"
               type="date"
@@ -389,7 +420,9 @@ function GoalSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
           </span>
         </p>
 
-        <button type="submit" className="btn-primary w-full">Lock it in</button>
+        <button type="submit" className="btn-primary w-full">
+          Lock it in
+        </button>
       </form>
     </Sheet>
   );

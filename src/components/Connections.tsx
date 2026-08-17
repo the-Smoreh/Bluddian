@@ -61,10 +61,10 @@ export function Connections() {
         type="button"
         onClick={() => setRelayOpen(true)}
         className={`card flex w-full items-start gap-3 p-4 text-left ${
-          hasRelay ? '' : 'border-brand/30 bg-brand/5'
+          hasRelay ? '' : 'border-line-strong bg-raised/40'
         }`}
       >
-        <span className={`mt-0.5 shrink-0 ${hasRelay ? 'text-good' : 'text-brand'}`}>
+        <span className={`mt-0.5 shrink-0 ${hasRelay ? 'text-good' : 'text-fg'}`}>
           <Icon name={hasRelay ? 'check' : 'link'} size={18} />
         </span>
         <span className="min-w-0 flex-1">
@@ -74,7 +74,7 @@ export function Connections() {
           <span className="mt-1 block text-xs leading-relaxed text-muted">
             {hasRelay
               ? 'Shopify and Whop can sync automatically.'
-              : "Shopify and Whop block phone browsers from calling them directly. A free relay unblocks that — one-time setup, nothing stored on it."}
+              : 'Shopify and Whop block phone browsers from calling them directly. A free relay unblocks that — one-time setup, nothing stored on it.'}
           </span>
         </span>
         <Icon name="chevronRight" size={16} className="mt-0.5 shrink-0 text-faint" />
@@ -95,7 +95,9 @@ export function Connections() {
               >
                 <span
                   className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${
-                    ready ? 'border-good/40 bg-good/10 text-good' : 'border-line bg-raised/60 text-faint'
+                    ready
+                      ? 'border-good/40 bg-good/10 text-good'
+                      : 'border-line bg-raised/60 text-faint'
                   }`}
                 >
                   <Icon name={ready ? 'check' : 'link'} size={16} />
@@ -114,9 +116,13 @@ export function Connections() {
                   {sync ? (
                     <span className="mt-1 block text-xs text-faint">
                       {sync.status === 'error' ? (
-                        <span className="text-bad">Failed {relativeTime(sync.at)} — {sync.message}</span>
+                        <span className="text-bad">
+                          Failed {relativeTime(sync.at)} — {sync.message}
+                        </span>
                       ) : (
-                        <>Synced {relativeTime(sync.at)} · {sync.message}</>
+                        <>
+                          Synced {relativeTime(sync.at)} · {sync.message}
+                        </>
                       )}
                     </span>
                   ) : null}
@@ -156,9 +162,7 @@ export function Connections() {
       </div>
 
       <RelaySheet open={relayOpen} onClose={() => setRelayOpen(false)} />
-      {editing ? (
-        <CredentialSheet connector={editing} onClose={() => setEditing(null)} />
-      ) : null}
+      {editing ? <CredentialSheet connector={editing} onClose={() => setEditing(null)} /> : null}
     </>
   );
 }
@@ -205,9 +209,9 @@ function RelaySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
         <div className="rounded-xl border border-line bg-raised/40 p-4">
           <p className="text-sm font-semibold">Why this is needed</p>
           <p className="mt-1.5 text-xs leading-relaxed text-muted">
-            Shopify and Whop refuse to answer web browsers — their APIs are built for servers.
-            The relay is a 50-line Cloudflare Worker that forwards one request. It stores nothing,
-            logs nothing, and only talks to Shopify and Whop.
+            Shopify and Whop refuse to answer web browsers — their APIs are built for servers. The
+            relay is a 50-line Cloudflare Worker that forwards one request. It stores nothing, logs
+            nothing, and only talks to Shopify and Whop.
           </p>
           <p className="mt-2 text-xs leading-relaxed text-faint">
             Setup instructions are in <span className="font-mono">worker/README.md</span> in your
@@ -216,7 +220,9 @@ function RelaySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
         </div>
 
         <div>
-          <label className="label" htmlFor="relay-url">Worker URL</label>
+          <label className="label" htmlFor="relay-url">
+            Worker URL
+          </label>
           <input
             id="relay-url"
             className="input font-mono text-sm"

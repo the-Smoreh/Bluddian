@@ -3,7 +3,11 @@
  * Floats only appear at the moment of rendering. Keep it that way.
  */
 
-export function fmtMoney(cents: number, currency = 'USD', opts: { compact?: boolean } = {}): string {
+export function fmtMoney(
+  cents: number,
+  currency = 'USD',
+  opts: { compact?: boolean } = {},
+): string {
   const value = cents / 100;
   if (opts.compact && Math.abs(value) >= 10_000) {
     const formatter = new Intl.NumberFormat('en-US', {
@@ -27,7 +31,9 @@ export function fmtNumber(n: number): string {
 }
 
 export function fmtCompact(n: number): string {
-  return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+  return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(
+    n,
+  );
 }
 
 export function fmtPct(n: number, digits = 0): string {
@@ -62,7 +68,11 @@ export function relativeTime(ts: number): string {
 }
 
 export function fmtDate(ts: number): string {
-  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(ts).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 export function fmtDayShort(day: string): string {

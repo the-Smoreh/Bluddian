@@ -3,56 +3,68 @@
 @tailwind utilities;
 
 /*
- * Bluddian is a deliberately dark, single-theme app. It's a phone dashboard you
- * check at 6am and 11pm; a light mode would be a second design to maintain for
- * a screen that's almost never bright. color-scheme tells the OS to render
- * form controls and scrollbars to match.
+ * Bluddian's design system.
+ *
+ * Direction: institutional-quiet. The reference points are Mercury, Linear and
+ * Copilot Money — tools people trust with money. What those share is restraint:
+ * true-neutral surfaces, hairline rules, one accent used sparingly, and type
+ * doing the work that decoration would otherwise do badly.
+ *
+ * Two rules keep it honest:
+ *   1. GOLD MEANS MONEY. Nothing else is ever gold.
+ *   2. The primary action is WHITE. A saturated primary button on a dark
+ *      surface is the loudest "generated" tell there is.
+ *
+ * Deliberately absent: gradient backdrops, glow shadows, saturated fills,
+ * blue-tinted greys. Each was in the first version and each was making the app
+ * look like a demo rather than a tool.
  */
 :root {
   color-scheme: dark;
 
-  --c-ink: 8 8 12;
-  --c-surface: 18 18 24;
-  --c-raised: 26 26 34;
-  --c-line: 38 38 48;
-  --c-fg: 242 242 245;
-  --c-muted: 154 154 168;
-  --c-faint: 98 98 111;
+  /* True neutrals. The previous palette tinted every surface toward blue,
+     which is what made the whole app read faintly purple. */
+  --c-ink: 9 9 10; /* page */
+  --c-surface: 20 20 22; /* raised panel */
+  --c-raised: 30 30 33; /* controls, inputs */
+  --c-line: 39 39 43; /* hairlines */
+  --c-line-strong: 56 56 61; /* emphasised borders */
 
-  --c-brand: 124 92 255;
-  --c-brand2: 34 211 238;
-  --c-gold: 245 181 68;
-  --c-good: 52 211 153;
-  --c-warn: 251 191 36;
-  --c-bad: 248 113 113;
+  --c-fg: 250 250 250;
+  --c-muted: 161 161 170;
+  --c-faint: 113 113 122;
+
+  /* Money. One hue, one meaning. */
+  --c-gold: 232 179 65;
+
+  /* State. Never decorative. */
+  --c-good: 74 201 126;
+  --c-warn: 224 168 61;
+  --c-bad: 240 106 106;
+
+  /* The game layer reads as neutral-bright so it never competes with money. */
+  --c-accent: 250 250 250;
 
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   /*
-   * Data-viz roles, kept separate from UI colors so charts are colored by the
-   * job the color does, not by whatever the nearest button uses.
-   *
-   * --series-* are the categorical slots, stepped for a dark surface and
-   * validated as a set against #121218: worst all-pairs CVD ΔE 9.4, worst
+   * Data-viz roles. --series-* are the categorical slots, stepped for a dark
+   * surface and validated as a set: worst all-pairs CVD ΔE 9.4, worst
    * normal-vision ΔE 20.9, all >= 3:1 contrast. Do not add a 4th slot without
    * re-running the validator — beyond three, fold the tail into "Other".
-   *
-   * Money and cost each get ONE hue, because every time-series in this app is a
-   * single series. They are never plotted on shared axes.
    */
-  --series-1: #3987e5; /* blue   — Whop      */
-  --series-2: #d95926; /* orange — manual    */
-  --series-3: #199e70; /* aqua   — Shopify   */
+  --series-1: #3987e5; /* blue   — Whop    */
+  --series-2: #d95926; /* orange — manual  */
+  --series-3: #199e70; /* aqua   — Shopify */
 
-  --viz-money: 245 181 68; /* gold, revenue */
-  --viz-cost: 144 133 233; /* violet, Claude spend */
-  --viz-track: 38 38 48; /* meter/grid track */
+  --viz-money: 232 179 65;
+  --viz-cost: 132 132 145; /* cost is deliberately grey: it is not a win */
+  --viz-track: 39 39 43;
   --viz-grid: 255 255 255;
 
-  /* Android gesture bar / status bar insets. */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --nav-h: 4.25rem;
+  --nav-h: 3.75rem;
 }
 
 * {
@@ -64,20 +76,10 @@ body {
   background: rgb(var(--c-ink));
   color: rgb(var(--c-fg));
   font-family: var(--font-sans);
-  /* Prevent iOS/Android pull-to-refresh fighting the scroll containers. */
   overscroll-behavior-y: none;
+  /* Flat. No radial gradients — the glow was pure decoration and read as AI. */
 }
 
-body {
-  /* Subtle depth so pure-black OLED doesn't look flat. */
-  background-image:
-    radial-gradient(900px 500px at 15% -10%, rgb(var(--c-brand) / 0.12), transparent 65%),
-    radial-gradient(700px 400px at 95% 0%, rgb(var(--c-brand2) / 0.07), transparent 60%);
-  background-attachment: fixed;
-}
-
-/* Nothing in a dashboard should be text-selectable-by-accident on touch,
-   except the values you might want to copy. */
 button,
 a,
 label {
@@ -85,74 +87,119 @@ label {
 }
 
 ::selection {
-  background: rgb(var(--c-brand) / 0.35);
+  background: rgb(var(--c-fg) / 0.16);
 }
 
-/* Thin scrollbars for the desktop case; invisible on mobile anyway. */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgb(var(--c-line));
+  background: rgb(var(--c-line-strong));
   border-radius: 99px;
 }
 
+@layer base {
+  /* Numbers are the content of this app, so they get real typographic care:
+     tabular figures so columns align and values don't jitter as they update,
+     and tighter tracking at display sizes. */
+  .nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1, 'cv01' 1;
+    letter-spacing: -0.01em;
+  }
+
+  h1,
+  h2 {
+    letter-spacing: -0.021em;
+  }
+}
+
 @layer components {
+  /* ---- surfaces ---------------------------------------------------------
+     One card style, one radius. The old file had four radii and three border
+     treatments, which is why nothing looked deliberate. */
   .card {
-    @apply rounded-xl2 border border-line/80 bg-surface/80 backdrop-blur-xl;
+    @apply rounded-2xl border border-line bg-surface;
   }
 
   .card-pad {
     @apply card p-4;
   }
 
-  /* Minimum 44px touch targets throughout — this is a thumb-driven app. */
-  .btn {
-    @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-xl px-4
-           text-sm font-semibold transition active:scale-[.97] disabled:opacity-40
-           disabled:active:scale-100;
+  /* A grouped list — the iOS/Android settings idiom. Rows separated by
+     hairlines inside one container reads far more like an app than a stack of
+     individually floating cards. */
+  .group-list {
+    @apply card divide-y divide-line overflow-hidden;
   }
 
+  .row {
+    @apply flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors active:bg-raised/60;
+  }
+
+  /* ---- controls ---------------------------------------------------------
+     44px minimum touch target throughout; this is a thumb-driven app. */
+  .btn {
+    @apply inline-flex min-h-[2.75rem] select-none items-center justify-center gap-2 rounded-xl
+           px-4 text-[0.9375rem] font-medium transition
+           active:scale-[0.985] disabled:pointer-events-none disabled:opacity-40;
+  }
+
+  /* White primary. The single highest-signal change in this redesign. */
   .btn-primary {
-    @apply btn bg-brand text-white shadow-lg shadow-brand/25 hover:bg-brand/90;
+    @apply btn bg-fg font-semibold text-ink hover:bg-fg/90;
   }
 
   .btn-ghost {
-    @apply btn border border-line bg-raised/60 text-fg hover:bg-raised;
+    @apply btn border border-line bg-raised/70 text-fg hover:border-line-strong hover:bg-raised;
+  }
+
+  .btn-quiet {
+    @apply btn text-muted hover:text-fg;
   }
 
   .btn-danger {
-    @apply btn border border-bad/40 bg-bad/10 text-bad hover:bg-bad/20;
+    @apply btn border border-bad/30 bg-bad/10 text-bad hover:bg-bad/15;
   }
 
   .input {
-    @apply w-full rounded-xl border border-line bg-raised/70 px-3.5 py-3 text-[15px] text-fg
-           placeholder:text-faint focus:border-brand/70 focus:outline-none focus:ring-2
-           focus:ring-brand/25;
+    @apply w-full rounded-xl border border-line bg-raised/60 px-3.5 py-3 text-[0.9375rem] text-fg
+           transition placeholder:text-faint
+           focus:border-line-strong focus:bg-raised focus:outline-none focus:ring-0;
   }
 
+  /* Labels are the quietest thing on screen. They orient; they don't announce. */
   .label {
-    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted;
+    @apply mb-2 block text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-faint;
+  }
+
+  /* Section headings sit on the page, not inside a card — cheaper visually
+     than another bordered container. */
+  .section-label {
+    @apply text-[0.6875rem] font-semibold uppercase tracking-[0.09em] text-faint;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-raised/70
-           px-2.5 py-1 text-xs font-medium text-muted;
+    @apply inline-flex items-center gap-1 rounded-md border border-line bg-raised/60
+           px-1.5 py-0.5 text-[0.6875rem] font-medium text-muted;
   }
 
-  .hairline {
-    @apply border-line/70;
+  /* ---- type -------------------------------------------------------------
+     A real scale, so hierarchy comes from size and weight rather than colour. */
+  .display {
+    @apply text-[2.5rem] font-semibold leading-[1.05] tracking-[-0.03em] nums;
   }
 
-  /* Tabular figures stop money values jittering as they animate/update. */
-  .nums {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: 'tnum';
+  .stat {
+    @apply text-[1.375rem] font-semibold leading-none tracking-[-0.02em] nums;
+  }
+
+  .metric-label {
+    @apply text-[0.75rem] font-medium text-faint;
   }
 }
 
-/* Respect the OS setting — the app has a lot of motion by design. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
