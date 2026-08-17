@@ -1,9 +1,12 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { AutoLock, VaultGate, useVault } from '@/components/VaultGate';
 import { BottomNav } from '@/components/Shell';
+import { useToast } from '@/components/Toast';
 import { useDatabase } from '@/lib/local/useStore';
-import { getSaveError } from '@/lib/local/store';
+import { getSaveError, isOpen } from '@/lib/local/store';
+import { shouldAutoSync, syncAll } from '@/lib/local/connectors';
 import { Icon } from '@/components/Icon';
 
 /**
@@ -34,8 +37,67 @@ function UnlockedFrame({ children }: { children: React.ReactNode }) {
       {children}
       <BottomNav />
       <AutoLock minutes={db.settings.autoLockMinutes} />
+      <AutoSync />
     </>
   );
+}
+
+/**
+ * Pulls new sales shortly after unlock, and again whenever the app is brought
+ * back to the foreground after a while.
+ *
+ * Deliberately silent on success with nothing new: a toast every time you open
+ * the app would be noise. It only speaks up when money actually arrived, or
+ * when a sync fails and you need to know your numbers are stale.
+ */
+function AutoSync() {
+  const toast = useToast();
+  const ran = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      if (!isOpen() || !shouldAutoSync()) return;
+
+      const results = await syncAll();
+      if (cancelled) return;
+
+      const added = Object.values(results).reduce((sum, r) => sum + r.added, 0);
+      const failed = Object.entries(results).filter(([, r]) => !r.ok);
+
+      if (added > 0) {
+        toast.success(
+          `${added} new sale${added === 1 ? '' : 's'}`,
+          'Pulled in automatically',
+        );
+      }
+      for (const [id, result] of failed) {
+        toast.error(`${id} sync failed`, result.message);
+      }
+    };
+
+    // Delayed so it never competes with first paint after unlock.
+    const initial = setTimeout(() => {
+      if (!ran.current) {
+        ran.current = true;
+        void run();
+      }
+    }, 1500);
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void run();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(initial);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [toast]);
+
+  return null;
 }
 
 /**
