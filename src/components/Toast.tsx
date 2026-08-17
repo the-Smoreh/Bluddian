@@ -38,7 +38,7 @@ const STYLES: Record<ToastKind, { icon: IconName; ring: string; text: string }> 
   info: { icon: 'spark', ring: 'border-line bg-raised', text: 'text-fg' },
   success: { icon: 'check', ring: 'border-good/40 bg-good/10', text: 'text-good' },
   error: { icon: 'x', ring: 'border-bad/40 bg-bad/10', text: 'text-bad' },
-  xp: { icon: 'zap', ring: 'border-brand/40 bg-brand/10', text: 'text-brand' },
+  xp: { icon: 'zap', ring: 'border-line-strong bg-raised/60', text: 'text-fg' },
   level: { icon: 'crown', ring: 'border-gold/50 bg-gold/10', text: 'text-gold' },
 };
 
@@ -54,9 +54,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       navigator.vibrate(t.kind === 'level' ? [12, 40, 24] : t.kind === 'error' ? [40] : 10);
     }
 
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((x) => x.id !== id));
-    }, t.kind === 'level' ? 5000 : 3400);
+    setTimeout(
+      () => {
+        setToasts((prev) => prev.filter((x) => x.id !== id));
+      },
+      t.kind === 'level' ? 5000 : 3400,
+    );
   }, []);
 
   const api = useMemo<ToastApi>(
@@ -81,7 +84,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div
         className="pointer-events-none fixed inset-x-0 z-[100] flex flex-col items-center gap-2 px-4"
-        style={{ top: 'calc(var(--safe-top) + 0.75rem)' }}
+        style={{ bottom: 'calc(var(--nav-h) + var(--safe-bottom) + 0.75rem)' }}
         role="status"
         aria-live="polite"
       >
@@ -90,8 +93,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           return (
             <div
               key={t.id}
-              className={`pointer-events-auto flex w-full max-w-sm animate-pop-in items-center gap-3
-                          rounded-2xl border ${s.ring} px-3.5 py-3 shadow-2xl backdrop-blur-xl`}
+              className={`pointer-events-auto flex w-full max-w-sm animate-slide-up items-center gap-2.5
+                          rounded-xl border ${s.ring} bg-surface px-3.5 py-2.5 shadow-lg shadow-black/40`}
             >
               <span className={`shrink-0 ${s.text}`}>
                 <Icon name={s.icon} size={20} />

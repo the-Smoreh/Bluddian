@@ -117,8 +117,8 @@ export type DayPoint = { day: string; value: number; count: number };
 /** Zero-filled daily series, so an empty day reads as zero rather than absent. */
 export function revenueByDay(db: Database, days = 30): DayPoint[] {
   const now = new Date();
-  const startDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) -
-    (days - 1) * 86_400_000;
+  const startDay =
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - (days - 1) * 86_400_000;
 
   const buckets = new Map<string, { value: number; count: number }>();
   for (const s of db.sales) {

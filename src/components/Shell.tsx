@@ -39,14 +39,19 @@ export function BottomNav() {
               <Link
                 href={tab.href}
                 aria-current={active ? 'page' : undefined}
-                className={`relative flex h-[var(--nav-h)] flex-col items-center justify-center gap-1
-                            transition-colors ${active ? 'text-brand' : 'text-faint hover:text-muted'}`}
+                className={`flex h-[var(--nav-h)] flex-col items-center justify-center gap-[3px]
+                            transition-colors ${active ? 'text-fg' : 'text-faint'}`}
               >
-                {active ? (
-                  <span className="absolute top-0 h-0.5 w-8 rounded-full bg-brand" aria-hidden="true" />
-                ) : null}
-                <Icon name={tab.icon} size={21} filled={false} />
-                <span className="text-[10px] font-semibold tracking-wide">{tab.label}</span>
+                {/* Weight carries the active state instead of a coloured rail.
+                    Native bars signal selection this quietly. */}
+                <Icon name={tab.icon} size={20} />
+                <span
+                  className={`text-[0.625rem] leading-none tracking-[0.01em] ${
+                    active ? 'font-semibold' : 'font-medium'
+                  }`}
+                >
+                  {tab.label}
+                </span>
               </Link>
             </li>
           );
@@ -105,8 +110,8 @@ export function SectionTitle({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-2.5 mt-6 flex items-center justify-between">
-      <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-muted">{children}</h2>
+    <div className="mb-2.5 mt-7 flex items-center justify-between">
+      <h2 className="section-label">{children}</h2>
       {action}
     </div>
   );

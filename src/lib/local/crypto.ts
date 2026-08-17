@@ -116,7 +116,11 @@ export async function deriveKeyFromPrf(prfOutput: ArrayBuffer): Promise<CryptoKe
 // -------------------------------------------------------------- wrap/unwrap --
 
 /** Encrypt the DEK under a wrapping key so it can be stored at rest. */
-export async function wrapDek(dek: CryptoKey, kek: CryptoKey, salt?: Uint8Array): Promise<WrappedKey> {
+export async function wrapDek(
+  dek: CryptoKey,
+  kek: CryptoKey,
+  salt?: Uint8Array,
+): Promise<WrappedKey> {
   const raw = await crypto.subtle.exportKey('raw', dek);
   const iv = randomBytes(IV_BYTES);
   const ct = await crypto.subtle.encrypt({ name: AES, iv: iv as BufferSource }, kek, raw);
@@ -145,14 +149,24 @@ export async function unwrapDek(wrapped: WrappedKey, kek: CryptoKey): Promise<Cr
 // ------------------------------------------------------------ payload enc --
 
 /** Encrypt an arbitrary JSON-serialisable value under the DEK. */
-export async function encryptJson(dek: CryptoKey, value: unknown): Promise<{ ct: string; iv: string }> {
+export async function encryptJson(
+  dek: CryptoKey,
+  value: unknown,
+): Promise<{ ct: string; iv: string }> {
   const iv = randomBytes(IV_BYTES);
   const data = new TextEncoder().encode(JSON.stringify(value));
-  const ct = await crypto.subtle.encrypt({ name: AES, iv: iv as BufferSource }, dek, data as BufferSource);
+  const ct = await crypto.subtle.encrypt(
+    { name: AES, iv: iv as BufferSource },
+    dek,
+    data as BufferSource,
+  );
   return { ct: toB64(ct), iv: toB64(iv) };
 }
 
-export async function decryptJson<T>(dek: CryptoKey, payload: { ct: string; iv: string }): Promise<T> {
+export async function decryptJson<T>(
+  dek: CryptoKey,
+  payload: { ct: string; iv: string },
+): Promise<T> {
   const plain = await crypto.subtle.decrypt(
     { name: AES, iv: fromB64(payload.iv) as BufferSource },
     dek,

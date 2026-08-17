@@ -1,6 +1,11 @@
 'use client';
 
-import { ConnectorError, type Connector, type ConnectorCreds, type RelayCall } from '@/lib/local/connectors/types';
+import {
+  ConnectorError,
+  type Connector,
+  type ConnectorCreds,
+  type RelayCall,
+} from '@/lib/local/connectors/types';
 import type { NewSale } from '@/lib/local/actions';
 
 /**
@@ -134,8 +139,9 @@ export const shopifyConnector: Connector = {
     // Bounded: 20 pages x 100 = 2000 orders per sync, plenty for a catch-up
     // and a hard stop against a pathological cursor loop.
     for (let page = 0; page < 20; page++) {
-      const data: { orders: { pageInfo: { hasNextPage: boolean; endCursor: string }; nodes: OrderNode[] } } =
-        await gql(creds, call, ORDERS_QUERY, { cursor, query: `created_at:>=${sinceIso}` });
+      const data: {
+        orders: { pageInfo: { hasNextPage: boolean; endCursor: string }; nodes: OrderNode[] };
+      } = await gql(creds, call, ORDERS_QUERY, { cursor, query: `created_at:>=${sinceIso}` });
 
       for (const o of data.orders.nodes) {
         const financial = (o.displayFinancialStatus ?? '').toUpperCase();

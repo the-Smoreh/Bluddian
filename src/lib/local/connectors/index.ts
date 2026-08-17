@@ -2,7 +2,12 @@
 
 import { requireState } from '@/lib/local/store';
 import { importSales, recordSync } from '@/lib/local/actions';
-import { makeRelayCall, relayConfigured, RELAY_TOKEN_KEY, RELAY_URL_KEY } from '@/lib/local/connectors/relay';
+import {
+  makeRelayCall,
+  relayConfigured,
+  RELAY_TOKEN_KEY,
+  RELAY_URL_KEY,
+} from '@/lib/local/connectors/relay';
 import { shopifyConnector } from '@/lib/local/connectors/shopify';
 import { whopConnector } from '@/lib/local/connectors/whop';
 import { ConnectorError, type Connector, type ConnectorCreds } from '@/lib/local/connectors/types';
@@ -57,10 +62,7 @@ export function isConfigured(connectorId: string): boolean {
 function relayCall() {
   const all = requireState().credentials;
   if (!relayConfigured(all)) {
-    throw new ConnectorError(
-      'Set up your relay first — Settings → Connections → Relay.',
-      'config',
-    );
+    throw new ConnectorError('Set up your relay first — Settings → Connections → Relay.', 'config');
   }
   return makeRelayCall(all[RELAY_URL_KEY], all[RELAY_TOKEN_KEY]);
 }
@@ -94,9 +96,8 @@ export async function syncConnector(connectorId: string): Promise<SyncResult> {
 
   try {
     const last = requireState().syncs[connectorId]?.at ?? 0;
-    const since = last > 0
-      ? Math.max(0, last - OVERLAP_MS)
-      : Date.now() - FIRST_SYNC_DAYS * 86_400_000;
+    const since =
+      last > 0 ? Math.max(0, last - OVERLAP_MS) : Date.now() - FIRST_SYNC_DAYS * 86_400_000;
 
     const outcome = await connector.fetchSales(credsFor(connectorId), since, relayCall());
 
@@ -115,7 +116,11 @@ export async function syncConnector(connectorId: string): Promise<SyncResult> {
     return { ok: true, added, skipped, message };
   } catch (err) {
     const message =
-      err instanceof ConnectorError ? err.message : err instanceof Error ? err.message : 'Sync failed.';
+      err instanceof ConnectorError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : 'Sync failed.';
     recordSync(connectorId, 'error', message, 0);
     return { ok: false, added: 0, skipped: 0, message };
   }

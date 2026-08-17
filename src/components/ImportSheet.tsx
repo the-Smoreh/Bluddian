@@ -43,7 +43,12 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
 
   function reparse(next: Platform) {
     setPlatform(next);
-    if (preview) setPreview({ ...preview, platform: next, rows: preview.rows.map((r) => ({ ...r, platform: next })) });
+    if (preview)
+      setPreview({
+        ...preview,
+        platform: next,
+        rows: preview.rows.map((r) => ({ ...r, platform: next })),
+      });
   }
 
   function confirm() {
@@ -99,7 +104,9 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
             </div>
 
             <div>
-              <label className="label" htmlFor="import-platform">Platform</label>
+              <label className="label" htmlFor="import-platform">
+                Platform
+              </label>
               <select
                 id="import-platform"
                 className="input"
@@ -150,7 +157,9 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
             </div>
 
             <div>
-              <label className="label" htmlFor="confirm-platform">Attribute to</label>
+              <label className="label" htmlFor="confirm-platform">
+                Attribute to
+              </label>
               <select
                 id="confirm-platform"
                 className="input"

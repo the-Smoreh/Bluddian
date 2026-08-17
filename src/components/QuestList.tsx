@@ -33,7 +33,9 @@ export function QuestList({ quests }: { quests: Quest[] }) {
   return (
     <div className="space-y-3">
       <QuestGroup label="Daily" quests={daily} onToggle={toggle} />
-      {weekly.length > 0 ? <QuestGroup label="This week" quests={weekly} onToggle={toggle} /> : null}
+      {weekly.length > 0 ? (
+        <QuestGroup label="This week" quests={weekly} onToggle={toggle} />
+      ) : null}
     </div>
   );
 }
@@ -70,20 +72,26 @@ function QuestGroup({
               >
                 <span
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition ${
-                    isDone ? 'border-good bg-good text-ink' : 'border-line bg-raised/60 text-transparent'
+                    isDone
+                      ? 'border-good bg-good text-ink'
+                      : 'border-line bg-raised/60 text-transparent'
                   }`}
                 >
                   <Icon name="check" size={14} />
                 </span>
 
                 <span className="min-w-0 flex-1">
-                  <span className={`block text-sm font-medium ${isDone ? 'text-faint line-through' : ''}`}>
+                  <span
+                    className={`block text-sm font-medium ${isDone ? 'text-faint line-through' : ''}`}
+                  >
                     {q.title}
                   </span>
                   <span className="block truncate text-xs text-faint">{q.detail}</span>
                 </span>
 
-                <span className={`shrink-0 text-xs font-bold nums ${isDone ? 'text-faint' : 'text-brand'}`}>
+                <span
+                  className={`shrink-0 text-xs font-bold nums ${isDone ? 'text-faint' : 'text-fg'}`}
+                >
                   +{q.xp}
                 </span>
               </button>

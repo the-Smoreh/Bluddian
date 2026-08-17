@@ -1,6 +1,11 @@
 'use client';
 
-import { ConnectorError, type Connector, type ConnectorCreds, type RelayCall } from '@/lib/local/connectors/types';
+import {
+  ConnectorError,
+  type Connector,
+  type ConnectorCreds,
+  type RelayCall,
+} from '@/lib/local/connectors/types';
 import type { NewSale } from '@/lib/local/actions';
 
 /**
@@ -68,7 +73,10 @@ async function get(
   const res = await call({ url: `${BASE}${path}?${qs}`, headers: authHeaders(creds) });
 
   if (res.status === 401 || res.status === 403) {
-    throw new ConnectorError('Whop rejected the API key. Check it in Developer → API keys.', 'auth');
+    throw new ConnectorError(
+      'Whop rejected the API key. Check it in Developer → API keys.',
+      'auth',
+    );
   }
   if (!res.ok) {
     throw new ConnectorError(`Whop returned ${res.status}: ${res.text.slice(0, 160)}`);

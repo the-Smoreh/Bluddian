@@ -39,10 +39,13 @@ export function StackedBar({ data, currency = 'USD' }: { data: Slice[]; currency
   return (
     <div>
       {/* The 2px gaps come from the flex gap, never from a stroke on the fills. */}
-      <div className="flex h-3 gap-[2px] overflow-hidden rounded-full" role="img"
-           aria-label={positive
-             .map((d) => `${series(d.platform).label} ${fmtMoney(d.revenue, currency)}`)
-             .join(', ')}>
+      <div
+        className="flex h-3 gap-[2px] overflow-hidden rounded-full"
+        role="img"
+        aria-label={positive
+          .map((d) => `${series(d.platform).label} ${fmtMoney(d.revenue, currency)}`)
+          .join(', ')}
+      >
         {positive.map((d) => (
           <span
             key={d.platform}

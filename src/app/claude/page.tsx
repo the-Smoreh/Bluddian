@@ -128,11 +128,17 @@ export default function ClaudePage() {
             </span>
           </div>
           <div className="mt-2.5">
-            <Meter value={claude.cacheSavingsPct} max={100} tone="good" height={8} label="Cache hit rate" />
+            <Meter
+              value={claude.cacheSavingsPct}
+              max={100}
+              tone="good"
+              height={8}
+              label="Cache hit rate"
+            />
           </div>
           <p className="mt-2 text-xs text-faint">
-            Cached input tokens bill at a fraction of the normal rate — a higher number here is money
-            you didn&apos;t spend.
+            Cached input tokens bill at a fraction of the normal rate — a higher number here is
+            money you didn&apos;t spend.
           </p>
         </div>
       ) : null}
@@ -144,8 +150,12 @@ export default function ClaudePage() {
             {claude.byModel.map((m) => (
               <li key={m.model} className="px-4 py-3">
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted">{m.model}</span>
-                  <span className="shrink-0 text-sm font-bold text-brand nums">{fmtMoney(m.cost)}</span>
+                  <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted">
+                    {m.model}
+                  </span>
+                  <span className="shrink-0 text-sm font-bold text-fg nums">
+                    {fmtMoney(m.cost)}
+                  </span>
                 </div>
                 <div className="mt-2">
                   <Meter value={m.cost} max={maxModelCost} tone="cost" height={5} label={m.model} />
@@ -169,7 +179,7 @@ export default function ClaudePage() {
                   <span className="block truncate text-sm">{u.model}</span>
                   <span className="block text-xs text-faint">{fmtDayShort(u.day)}</span>
                 </span>
-                <span className="shrink-0 text-sm font-semibold text-brand nums">
+                <span className="shrink-0 text-sm font-semibold text-fg nums">
                   {fmtMoney(u.costCents)}
                 </span>
                 <button
@@ -213,7 +223,9 @@ export default function ClaudePage() {
       <Sheet open={open} onClose={() => setOpen(false)} title="Log Claude spend">
         <form onSubmit={submit} className="space-y-4 pb-2">
           <div>
-            <label className="label" htmlFor="c-cost">Amount spent</label>
+            <label className="label" htmlFor="c-cost">
+              Amount spent
+            </label>
             <input
               id="c-cost"
               className="input text-2xl font-bold nums"
@@ -227,7 +239,9 @@ export default function ClaudePage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="label" htmlFor="c-day">Date</label>
+              <label className="label" htmlFor="c-day">
+                Date
+              </label>
               <input
                 id="c-day"
                 type="date"
@@ -238,7 +252,9 @@ export default function ClaudePage() {
               />
             </div>
             <div>
-              <label className="label" htmlFor="c-model">Label</label>
+              <label className="label" htmlFor="c-model">
+                Label
+              </label>
               <input
                 id="c-model"
                 className="input"
@@ -254,7 +270,9 @@ export default function ClaudePage() {
             Logging the same date and label again replaces that entry rather than adding to it.
           </p>
 
-          <button type="submit" className="btn-primary w-full">Log it</button>
+          <button type="submit" className="btn-primary w-full">
+            Log it
+          </button>
         </form>
       </Sheet>
     </Page>

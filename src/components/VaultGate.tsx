@@ -99,7 +99,7 @@ export function VaultGate({ children }: { children: React.ReactNode }) {
   if (phase === 'loading') {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-line border-t-brand" />
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-line border-t-fg" />
       </div>
     );
   }
@@ -153,12 +153,16 @@ function SetupScreen({
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6"
-          style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}>
+    <main
+      className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6"
+      style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}
+    >
       <div className="mb-7 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl
-                        bg-gradient-to-br from-brand to-brand2 shadow-xl shadow-brand/30">
-          <Icon name="trophy" size={30} className="text-white" />
+        <div
+          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl
+                        bg-fg"
+        >
+          <Icon name="trophy" size={28} className="text-ink" />
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Bluddian</h1>
         <p className="mt-1.5 text-sm text-muted">
@@ -168,12 +172,17 @@ function SetupScreen({
 
       <form onSubmit={submit} className="card space-y-4 p-5">
         <div>
-          <label className="label" htmlFor="pin">Recovery PIN</label>
+          <label className="label" htmlFor="pin">
+            Recovery PIN
+          </label>
           <input
             id="pin"
             className="input text-center text-2xl tracking-[0.4em] nums"
             value={pin}
-            onChange={(e) => { setPin(e.target.value.replace(/\D/g, '').slice(0, 12)); setError(''); }}
+            onChange={(e) => {
+              setPin(e.target.value.replace(/\D/g, '').slice(0, 12));
+              setError('');
+            }}
             inputMode="numeric"
             autoComplete="new-password"
             placeholder="••••••"
@@ -185,12 +194,17 @@ function SetupScreen({
         </div>
 
         <div>
-          <label className="label" htmlFor="confirm">Confirm</label>
+          <label className="label" htmlFor="confirm">
+            Confirm
+          </label>
           <input
             id="confirm"
             className="input text-center text-2xl tracking-[0.4em] nums"
             value={confirm}
-            onChange={(e) => { setConfirm(e.target.value.replace(/\D/g, '').slice(0, 12)); setError(''); }}
+            onChange={(e) => {
+              setConfirm(e.target.value.replace(/\D/g, '').slice(0, 12));
+              setError('');
+            }}
             inputMode="numeric"
             autoComplete="new-password"
             placeholder="••••••"
@@ -313,12 +327,16 @@ function LockScreen({
   const locked = remaining > 0;
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6"
-          style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}>
+    <main
+      className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6"
+      style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}
+    >
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl
-                        bg-gradient-to-br from-brand to-brand2 shadow-xl shadow-brand/30">
-          <Icon name="lock" size={28} className="text-white" />
+        <div
+          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl
+                        bg-fg"
+        >
+          <Icon name="lock" size={26} className="text-ink" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight">Locked</h1>
         <p className="mt-1.5 text-sm text-muted">
@@ -352,7 +370,9 @@ function LockScreen({
           {showPinPad ? (
             <form onSubmit={submitPin} className="card space-y-4 p-5">
               <div>
-                <label className="label" htmlFor="unlock-pin">PIN</label>
+                <label className="label" htmlFor="unlock-pin">
+                  PIN
+                </label>
                 <input
                   id="unlock-pin"
                   className="input text-center text-2xl tracking-[0.4em] nums"
@@ -373,7 +393,11 @@ function LockScreen({
                 </p>
               ) : null}
 
-              <button type="submit" className="btn-primary w-full" disabled={busy || pin.length < 4}>
+              <button
+                type="submit"
+                className="btn-primary w-full"
+                disabled={busy || pin.length < 4}
+              >
                 {busy ? 'Checking…' : 'Unlock'}
               </button>
             </form>

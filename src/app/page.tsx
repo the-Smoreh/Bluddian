@@ -6,7 +6,7 @@ import { Page, SectionTitle } from '@/components/Shell';
 import { StatTile } from '@/components/StatTile';
 import { TrendChart } from '@/components/charts/TrendChart';
 import { StackedBar } from '@/components/charts/StackedBar';
-import { Meter, SegmentMeter } from '@/components/charts/Meter';
+import { Meter } from '@/components/charts/Meter';
 import { Icon } from '@/components/Icon';
 import { QuestList } from '@/components/QuestList';
 import { useDb } from '@/lib/local/useStore';
@@ -51,73 +51,36 @@ export default function Dashboard() {
 
   return (
     <Page>
-      <header className="mb-6">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm text-muted">
-              {greeting()}, {db.settings.displayName}
-            </p>
-            <h1 className="mt-0.5 truncate text-2xl font-bold tracking-tight">
-              Level {level.level} · {level.title}
-            </h1>
-          </div>
-          <Link
-            href="/settings"
-            className="shrink-0 rounded-full border border-line bg-raised/60 p-2.5 text-muted transition active:scale-95"
-            aria-label="Settings"
-          >
-            <Icon name="settings" size={19} />
-          </Link>
-        </div>
-
-        <div className="mt-3.5">
-          <Meter
-            value={level.intoLevel}
-            max={level.needed}
-            tone="brand"
-            height={8}
-            label={`${level.intoLevel} of ${level.needed} XP to level ${level.level + 1}`}
-          />
-          <div className="mt-1.5 flex justify-between text-xs">
-            <span className="text-muted nums">
-              {fmtNumber(level.intoLevel)} / {fmtNumber(level.needed)} XP
-            </span>
-            <span className="text-faint">Level {level.level + 1} next</span>
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center gap-3 rounded-xl2 border border-line/80 bg-surface/70 px-3.5 py-3">
-          <span className={db.player.streakDays > 0 ? 'text-gold' : 'text-faint'}>
-            <Icon name="flame" size={20} filled={db.player.streakDays > 0} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline justify-between">
-              <p className="text-sm font-semibold">
-                {db.player.streakDays > 0 ? `${db.player.streakDays}-day streak` : 'No streak yet'}
-              </p>
-              <p className="text-xs text-faint">Best {db.player.longestStreak}</p>
-            </div>
-            <div className="mt-2">
-              <SegmentMeter
-                filled={Math.min(db.player.streakDays % 7 || (db.player.streakDays ? 7 : 0), 7)}
-                total={7}
-              />
-            </div>
-          </div>
-        </div>
+      {/*
+        Hierarchy rewrite. Previously the rank was an h1 and the money sat in a
+        card below it, so the first thing you read every morning was a game
+        label. The money is the point of the app, so the money is the headline
+        and the game sits underneath it as a quiet strip.
+      */}
+      <header className="mb-5 flex items-center justify-between gap-3">
+        <p className="truncate text-[0.9375rem] text-muted">
+          {greeting()}, <span className="text-fg">{db.settings.displayName}</span>
+        </p>
+        <Link
+          href="/settings"
+          className="-mr-1.5 shrink-0 p-1.5 text-faint transition-colors hover:text-fg"
+          aria-label="Settings"
+        >
+          <Icon name="settings" size={19} />
+        </Link>
       </header>
 
-      <section className="card-pad">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Net revenue · this month
-        </p>
-        <p className="mt-1 text-[2.75rem] font-bold leading-none tracking-tight text-gold nums">
-          {fmtMoney(rev.month)}
-        </p>
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+      {/* The hero sits directly on the page, not in a card. Giving the most
+          important number its own container would visually rank it equal to
+          everything else that has one. */}
+      <section>
+        <p className="metric-label">Net revenue · this month</p>
+        <p className="display mt-1.5 text-gold">{fmtMoney(rev.month)}</p>
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.8125rem]">
           {rev.monthDelta !== null ? (
             <span
-              className={`inline-flex items-center gap-1 font-semibold ${
+              className={`inline-flex items-center gap-1 font-medium ${
                 rev.monthDelta >= 0 ? 'text-good' : 'text-bad'
               }`}
             >
@@ -126,38 +89,72 @@ export default function Dashboard() {
                 {rev.monthDelta >= 0 ? '+' : ''}
                 {rev.monthDelta.toFixed(0)}%
               </span>
-              <span className="font-normal text-faint">vs last month</span>
             </span>
-          ) : (
-            <span className="text-faint">No prior month to compare</span>
-          )}
-          <span className="text-faint nums">{rev.salesMonth} sales</span>
+          ) : null}
+          <span className="text-faint nums">
+            {rev.salesMonth} {rev.salesMonth === 1 ? 'sale' : 'sales'}
+          </span>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-5">
           <TrendChart data={days} tone="money" />
         </div>
       </section>
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      {/* Level, XP and streak compressed into one quiet strip. Three separate
+          blocks of chrome for the game layer was drowning the numbers. */}
+      <div className="mt-6 flex items-center gap-3 border-y border-line py-3">
+        <span
+          className={db.player.streakDays > 0 ? 'shrink-0 text-gold' : 'shrink-0 text-faint'}
+          title={`${db.player.streakDays}-day streak`}
+        >
+          <Icon name="flame" size={16} filled={db.player.streakDays > 0} />
+        </span>
+        <span className="shrink-0 text-[0.8125rem] text-muted nums">{db.player.streakDays}d</span>
+
+        <span className="h-3.5 w-px shrink-0 bg-line" aria-hidden="true" />
+
+        <div className="min-w-0 flex-1">
+          <Meter
+            value={level.intoLevel}
+            max={level.needed}
+            tone="accent"
+            height={4}
+            label={`${level.intoLevel} of ${level.needed} XP to level ${level.level + 1}`}
+          />
+        </div>
+
+        <span className="shrink-0 text-[0.8125rem] text-muted">
+          Lv {level.level}
+          <span className="ml-1 text-faint">{level.title}</span>
+        </span>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-2.5">
         <StatTile
           label="All time"
           value={fmtMoney(rev.allTime, 'USD', { compact: true })}
           sub={`${fmtNumber(rev.salesTotal)} sales`}
           icon="coin"
-          tone="money"
         />
         <StatTile
           label="Today"
           value={fmtMoney(rev.today)}
-          sub={rev.week > 0 ? `${fmtMoney(rev.week, 'USD', { compact: true })} this week` : 'Nothing yet'}
+          sub={
+            rev.week > 0
+              ? `${fmtMoney(rev.week, 'USD', { compact: true })} this week`
+              : 'Nothing yet'
+          }
           icon="zap"
-          tone="money"
         />
         <StatTile
           label="Avg order"
           value={rev.aovCents > 0 ? fmtMoney(rev.aovCents) : '—'}
-          sub={rev.mrrCents > 0 ? `${fmtMoney(rev.mrrCents, 'USD', { compact: true })} recurring` : 'One-off sales'}
+          sub={
+            rev.mrrCents > 0
+              ? `${fmtMoney(rev.mrrCents, 'USD', { compact: true })} recurring`
+              : 'One-off sales'
+          }
           icon="cart"
         />
         <StatTile
@@ -192,7 +189,11 @@ export default function Dashboard() {
       {primaryGoal ? (
         <>
           <SectionTitle
-            action={<Link href="/goals" className="text-xs font-semibold text-brand">All goals</Link>}
+            action={
+              <Link href="/goals" className="text-xs font-semibold text-fg">
+                All goals
+              </Link>
+            }
           >
             Active goal
           </SectionTitle>
@@ -274,7 +275,11 @@ export default function Dashboard() {
       {sales.length > 0 ? (
         <>
           <SectionTitle
-            action={<Link href="/money" className="text-xs font-semibold text-brand">See all</Link>}
+            action={
+              <Link href="/money" className="text-xs font-semibold text-fg">
+                See all
+              </Link>
+            }
           >
             Latest sales
           </SectionTitle>
@@ -301,7 +306,11 @@ export default function Dashboard() {
       ) : null}
 
       <SectionTitle
-        action={<Link href="/build" className="text-xs font-semibold text-brand">Manage</Link>}
+        action={
+          <Link href="/build" className="text-xs font-semibold text-fg">
+            Manage
+          </Link>
+        }
       >
         Pipeline
       </SectionTitle>
@@ -324,7 +333,9 @@ export default function Dashboard() {
                 key={a.code}
                 title={`${a.name} — ${a.detail}`}
                 className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium ${
-                  has ? 'border-gold/50 bg-gold/10 text-gold' : 'border-line bg-raised/40 text-faint'
+                  has
+                    ? 'border-gold/50 bg-gold/10 text-gold'
+                    : 'border-line bg-raised/40 text-faint'
                 }`}
               >
                 <Icon name={has ? 'trophy' : 'lock'} size={12} />
@@ -339,9 +350,9 @@ export default function Dashboard() {
       </div>
 
       {!hasData ? (
-        <div className="card mt-6 border-brand/30 bg-brand/5 p-4">
+        <div className="card mt-6 border-line-strong bg-raised/40 p-4">
           <div className="flex items-start gap-3">
-            <span className="text-brand">
+            <span className="text-fg">
               <Icon name="link" size={18} />
             </span>
             <div className="min-w-0">
