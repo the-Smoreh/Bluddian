@@ -2,6 +2,7 @@
   "name": "Bluddian",
   "short_name": "Bluddian",
   "description": "Private founder dashboard — revenue, products, courses, Claude spend, and goals.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
