@@ -25,6 +25,7 @@ if (!base) {
 const manifestPath = path.join(OUT, 'manifest.webmanifest');
 const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
 
+manifest.id = `${base}/`;
 manifest.start_url = `${base}/`;
 manifest.scope = `${base}/`;
 manifest.icons = manifest.icons.map((icon) => ({ ...icon, src: `${base}${icon.src}` }));
