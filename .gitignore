@@ -3,6 +3,10 @@
 out/
 build/
 dist/
+# Zipped copy of out/, made for drag-and-drop deploys. Regenerate with
+# `npm run build && cd out && zip -r ../bluddian-app.zip .` — never commit it,
+# it goes stale the moment any source file changes.
+bluddian-app.zip
 
 # ---- Deps ----
 node_modules/
