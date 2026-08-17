@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useMounted } from '@/lib/useAnimated';
 import type { DayPoint } from '@/lib/local/selectors';
 import { fmtDayShort, fmtMoney } from '@/lib/money';
 
@@ -25,15 +26,19 @@ export function BarChart({
   currency?: string;
 }) {
   const [active, setActive] = useState<number | null>(null);
+  const mounted = useMounted();
   const color = tone === 'money' ? 'rgb(var(--viz-money))' : 'rgb(var(--viz-cost))';
 
-  if (data.length === 0) {
+  // A zero-filled series still has length, so "no data" means "all zero".
+  if (data.length === 0 || data.every((d) => d.value === 0)) {
     return (
-      <div
-        className="flex items-center justify-center rounded-xl border border-dashed border-line text-xs text-faint"
-        style={{ height }}
-      >
-        No data yet
+      <div className="relative flex flex-col items-center justify-center gap-1" style={{ height }}>
+        <div
+          className="absolute inset-x-0 bottom-3 border-t border-dashed border-line"
+          aria-hidden="true"
+        />
+        <p className="relative text-[0.8125rem] font-medium text-muted">Nothing yet</p>
+        <p className="relative text-xs text-faint">Bars appear as sales come in</p>
       </div>
     );
   }
@@ -85,10 +90,13 @@ export function BarChart({
                 className="w-full rounded-t transition-all duration-300"
                 style={{
                   // A 2px floor keeps zero days visible as zero.
-                  height: `max(2px, ${pct}%)`,
+                  height: mounted ? `max(2px, ${pct}%)` : '2px',
                   background: color,
                   opacity: active === null ? 0.85 : isActive ? 1 : 0.32,
                   borderRadius: '4px 4px 2px 2px',
+                  // Staggered left-to-right so the month reads as filling in.
+                  transition: 'height 620ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms',
+                  transitionDelay: `${Math.min(i * 14, 420)}ms`,
                 }}
               />
             </button>

@@ -9,6 +9,8 @@ import { StackedBar } from '@/components/charts/StackedBar';
 import { Meter } from '@/components/charts/Meter';
 import { Icon } from '@/components/Icon';
 import { QuestList } from '@/components/QuestList';
+import { Reveal } from '@/components/Skeleton';
+import { useCountUp } from '@/lib/useAnimated';
 import { useDb } from '@/lib/local/useStore';
 import { ACHIEVEMENTS, ensureQuests, levelInfo } from '@/lib/local/actions';
 import { fmtMoney, fmtNumber, relativeTime } from '@/lib/money';
@@ -44,6 +46,7 @@ export default function Dashboard() {
   const counts = productStatusCounts(db);
   const sales = recentSales(db, 5);
 
+  const animatedMonth = useCountUp(rev.month);
   const primaryGoal = goals.find((g) => g.status === 'active') ?? null;
   const quests = questsReady ? db.quests : [];
   const hasData = rev.salesTotal > 0 || claude.costAllCents > 0;
@@ -75,7 +78,7 @@ export default function Dashboard() {
           everything else that has one. */}
       <section>
         <p className="metric-label">Net revenue · this month</p>
-        <p className="display mt-1.5 text-gold">{fmtMoney(rev.month)}</p>
+        <p className="display mt-1.5 text-gold">{fmtMoney(Math.round(animatedMonth))}</p>
 
         <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.8125rem]">
           {rev.monthDelta !== null ? (
@@ -130,7 +133,7 @@ export default function Dashboard() {
         </span>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-2.5">
+      <Reveal delay={60} className="mt-5 grid grid-cols-2 gap-2.5">
         <StatTile
           label="All time"
           value={fmtMoney(rev.allTime, 'USD', { compact: true })}
@@ -164,7 +167,27 @@ export default function Dashboard() {
           icon="spark"
           tone="cost"
         />
-      </div>
+      </Reveal>
+
+      {!hasData ? (
+        <Reveal delay={120} className="mt-6">
+          <div className="card p-5 text-center">
+            <p className="text-[0.9375rem] font-semibold">Let&apos;s get the first number in</p>
+            <p className="mx-auto mt-1.5 max-w-[32ch] text-sm leading-relaxed text-muted">
+              Log a sale by hand, import a Whop or Shopify export, or connect them to sync
+              automatically. Everything stays on this phone.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <Link href="/settings" className="btn-ghost flex-1">
+                Connect
+              </Link>
+              <Link href="/money" className="btn-primary flex-1">
+                Log a sale
+              </Link>
+            </div>
+          </div>
+        </Reveal>
+      ) : null}
 
       {claude.costMonthCents > 0 ? (
         <div className="card-pad mt-3">
@@ -305,68 +328,56 @@ export default function Dashboard() {
         </>
       ) : null}
 
-      <SectionTitle
-        action={
-          <Link href="/build" className="text-xs font-semibold text-fg">
-            Manage
-          </Link>
-        }
-      >
-        Pipeline
-      </SectionTitle>
-      <div className="grid grid-cols-3 gap-3">
-        {(['idea', 'building', 'live'] as const).map((status) => (
-          <Link key={status} href="/build" className="card-pad text-center active:scale-[.98]">
-            <p className="text-2xl font-bold nums">{counts[status] ?? 0}</p>
-            <p className="mt-0.5 text-xs capitalize text-muted">{status}</p>
-          </Link>
-        ))}
-      </div>
-
-      <SectionTitle>Achievements</SectionTitle>
-      <div className="card-pad">
-        <div className="flex flex-wrap gap-2">
-          {ACHIEVEMENTS.slice(0, 10).map((a) => {
-            const has = Boolean(db.achievements[a.code]);
-            return (
-              <span
-                key={a.code}
-                title={`${a.name} — ${a.detail}`}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium ${
-                  has
-                    ? 'border-gold/50 bg-gold/10 text-gold'
-                    : 'border-line bg-raised/40 text-faint'
-                }`}
-              >
-                <Icon name={has ? 'trophy' : 'lock'} size={12} />
-                {a.name}
-              </span>
-            );
-          })}
-        </div>
-        <p className="mt-3 text-xs text-faint">
-          {earnedCount} of {ACHIEVEMENTS.length} unlocked
-        </p>
-      </div>
-
-      {!hasData ? (
-        <div className="card mt-6 border-line-strong bg-raised/40 p-4">
-          <div className="flex items-start gap-3">
-            <span className="text-fg">
-              <Icon name="link" size={18} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">Get your numbers in</p>
-              <p className="mt-1 text-sm text-muted">
-                Import a Whop or Shopify order export, or just log sales by hand. Everything stays
-                on this phone.
-              </p>
-              <Link href="/money" className="btn-primary mt-3 w-full">
-                Add revenue
+      {hasData || db.products.length > 0 ? (
+        <>
+          <SectionTitle
+            action={
+              <Link href="/build" className="text-xs font-semibold text-fg">
+                Manage
               </Link>
-            </div>
+            }
+          >
+            Pipeline
+          </SectionTitle>
+          <div className="grid grid-cols-3 gap-3">
+            {(['idea', 'building', 'live'] as const).map((status) => (
+              <Link key={status} href="/build" className="card-pad text-center active:scale-[.98]">
+                <p className="text-2xl font-bold nums">{counts[status] ?? 0}</p>
+                <p className="mt-0.5 text-xs capitalize text-muted">{status}</p>
+              </Link>
+            ))}
           </div>
-        </div>
+        </>
+      ) : null}
+
+      {hasData ? (
+        <>
+          <SectionTitle>Achievements</SectionTitle>
+          <div className="card-pad">
+            <div className="flex flex-wrap gap-2">
+              {ACHIEVEMENTS.slice(0, 10).map((a) => {
+                const has = Boolean(db.achievements[a.code]);
+                return (
+                  <span
+                    key={a.code}
+                    title={`${a.name} — ${a.detail}`}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium ${
+                      has
+                        ? 'border-gold/50 bg-gold/10 text-gold'
+                        : 'border-line bg-raised/40 text-faint'
+                    }`}
+                  >
+                    <Icon name={has ? 'trophy' : 'lock'} size={12} />
+                    {a.name}
+                  </span>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-xs text-faint">
+              {earnedCount} of {ACHIEVEMENTS.length} unlocked
+            </p>
+          </div>
+        </>
       ) : null}
     </Page>
   );
