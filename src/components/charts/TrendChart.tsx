@@ -1,8 +1,9 @@
 'use client';
 
-import { useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { DayPoint } from '@/lib/local/selectors';
 import { fmtDayShort, fmtMoney } from '@/lib/money';
+import { prefersReducedMotion } from '@/lib/useAnimated';
 
 /**
  * Single-series trend over time. One hue, no legend — the card title names the
@@ -29,6 +30,13 @@ export function TrendChart({
 }) {
   const gradientId = useId();
   const [active, setActive] = useState<number | null>(null);
+
+  // Measuring the real path length is what lets the dash trick work for any
+  // shape; a guessed constant makes short series finish early and long ones
+  // never finish at all.
+  const lineRef = useRef<SVGPathElement>(null);
+  const [length, setLength] = useState(0);
+  const [drawn, setDrawn] = useState(false);
 
   const color = tone === 'money' ? 'rgb(var(--viz-money))' : 'rgb(var(--viz-cost))';
 
@@ -69,7 +77,21 @@ export function TrendChart({
     return { path, areaPath, points, max };
   }, [data, H]);
 
-  if (data.length === 0) return <EmptyPlot height={height} />;
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      setDrawn(true);
+      return;
+    }
+    const node = lineRef.current;
+    if (!node) return;
+
+    setLength(node.getTotalLength());
+    const raf = requestAnimationFrame(() => requestAnimationFrame(() => setDrawn(true)));
+    return () => cancelAnimationFrame(raf);
+  }, [path]);
+
+  const isEmpty = data.length === 0 || data.every((d) => d.value === 0);
+  if (isEmpty) return <EmptyPlot height={height} tone={tone} />;
 
   const activePoint = active !== null ? points[active] : null;
   const activeDatum = active !== null ? data[active] : null;
@@ -132,8 +154,16 @@ export function TrendChart({
           strokeWidth="1"
         />
 
-        <path d={areaPath} fill={`url(#${gradientId})`} />
         <path
+          d={areaPath}
+          fill={`url(#${gradientId})`}
+          style={{
+            opacity: drawn ? 1 : 0,
+            transition: 'opacity 700ms ease-out 250ms',
+          }}
+        />
+        <path
+          ref={lineRef}
           d={path}
           fill="none"
           stroke={color}
@@ -141,6 +171,15 @@ export function TrendChart({
           strokeLinecap="round"
           strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
+          style={
+            length
+              ? {
+                  strokeDasharray: length,
+                  strokeDashoffset: drawn ? 0 : length,
+                  transition: 'stroke-dashoffset 1100ms cubic-bezier(0.22, 1, 0.36, 1)',
+                }
+              : undefined
+          }
         />
 
         {activePoint ? (
@@ -222,13 +261,29 @@ export function Sparkline({
   );
 }
 
-function EmptyPlot({ height }: { height: number }) {
+/**
+ * Shown when there is nothing to plot. A faint dotted baseline holds the
+ * chart's footprint so the layout does not jump the moment the first sale
+ * lands, and the copy says what will fill it.
+ */
+function EmptyPlot({ height, tone }: { height: number; tone: 'money' | 'cost' }) {
   return (
     <div
-      className="flex items-center justify-center rounded-xl border border-dashed border-line text-xs text-faint"
-      style={{ height }}
+      className="relative flex flex-col items-center justify-center gap-1"
+      style={{ height: Math.round(height * 0.62) }}
+      role="img"
+      aria-label="No data yet"
     >
-      No data yet
+      <div
+        className="absolute inset-x-0 bottom-4 border-t border-dashed border-line"
+        aria-hidden="true"
+      />
+      <p className="relative text-[0.8125rem] font-medium text-muted">
+        {tone === 'money' ? 'No revenue yet' : 'No spend yet'}
+      </p>
+      <p className="relative text-xs text-faint">
+        {tone === 'money' ? 'Your first sale starts the line' : 'Log spend to track it'}
+      </p>
     </div>
   );
 }

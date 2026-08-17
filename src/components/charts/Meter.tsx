@@ -1,3 +1,7 @@
+'use client';
+
+import { useMounted } from '@/lib/useAnimated';
+
 /**
  * A single ratio against a limit — the correct form for goal progress, XP to
  * next level, and course completion. Deliberately NOT a ring or a two-slice
@@ -21,6 +25,7 @@ export function Meter({
   label?: string;
   className?: string;
 }) {
+  const mounted = useMounted();
   const safeMax = Math.max(1, max);
   const pct = Math.max(0, Math.min(100, (value / safeMax) * 100));
 
@@ -44,9 +49,12 @@ export function Meter({
       aria-label={label}
     >
       <div
-        className="h-full rounded-full transition-[width] duration-700 ease-out"
+        className="h-full rounded-full"
         style={{
-          width: `${pct}%`,
+          // Fills from empty on first paint, then eases between values as the
+          // underlying number changes.
+          width: mounted ? `${pct}%` : '0%',
+          transition: 'width 850ms cubic-bezier(0.22, 1, 0.36, 1)',
           background: fill,
         }}
       />
@@ -78,9 +86,11 @@ export function SegmentMeter({
       {Array.from({ length: total }, (_, i) => (
         <span
           key={i}
-          className="h-1.5 flex-1 rounded-full transition-colors"
+          className="h-1.5 flex-1 rounded-full"
           style={{
             background: i < filled ? tone : 'rgb(var(--viz-track))',
+            transition: 'background-color 320ms ease-out',
+            transitionDelay: `${i * 60}ms`,
           }}
         />
       ))}

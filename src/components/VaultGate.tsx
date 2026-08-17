@@ -18,6 +18,7 @@ import {
   type VaultMeta,
 } from '@/lib/local/vault';
 import { requestPersistence } from '@/lib/local/idb';
+import { DashboardSkeleton } from '@/components/Skeleton';
 
 /**
  * The unlock gate. Nothing below it renders until the vault is open, because
@@ -97,11 +98,9 @@ export function VaultGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   if (phase === 'loading') {
-    return (
-      <div className="flex min-h-dvh items-center justify-center">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-line border-t-fg" />
-      </div>
-    );
+    // Shaped like the dashboard rather than a spinner, so the layout is already
+    // settled when the real numbers arrive.
+    return <DashboardSkeleton />;
   }
 
   if (phase === 'setup') {
