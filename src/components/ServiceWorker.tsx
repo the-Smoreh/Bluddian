@@ -2,25 +2,28 @@
 
 import { useEffect } from 'react';
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
 /**
- * Registers the service worker that makes this installable and offline-capable.
- * Kept as its own client component so the root layout stays a server component.
+ * Registers the service worker that makes the app installable and offline-
+ * capable. With no backend, the worker's only job is caching the app shell —
+ * your data lives in IndexedDB and never passes through it.
  */
 export function ServiceWorker() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-      // Service workers require a secure context; skip quietly on plain HTTP.
-      return;
-    }
+
+    // Service workers (and WebAuthn) require a secure context. localhost counts.
+    const secure =
+      window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+    if (!secure) return;
 
     const register = () => {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((err) => {
-        console.warn('[sw] registration failed', err);
-      });
+      navigator.serviceWorker
+        .register(`${BASE}/sw.js`, { scope: `${BASE}/` })
+        .catch((err) => console.warn('[sw] registration failed', err));
     };
 
-    // Wait for idle so registration never competes with first paint.
     if (document.readyState === 'complete') register();
     else window.addEventListener('load', register, { once: true });
   }, []);

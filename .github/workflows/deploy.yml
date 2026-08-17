@@ -1,0 +1,59 @@
+name: Build and deploy
+
+# Builds the static app and publishes it to GitHub Pages.
+#
+# The published site contains only application code — no data. Your sales,
+# goals and keys live encrypted in your phone's storage and are never uploaded,
+# so it is safe for the site to be reachable even though the repo is private.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deploys at once; cancel a superseded one rather than racing.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      # GitHub Pages serves project sites from /<repo>/, so the app needs to
+      # know its base path. Deploying to a root domain instead? Drop this env.
+      - name: Build
+        run: npm run build
+        env:
+          BASE_PATH: ${{ github.event.repository.name != format('{0}.github.io', github.repository_owner) && format('/{0}', github.event.repository.name) || '' }}
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

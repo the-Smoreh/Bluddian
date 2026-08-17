@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useMemo, useState } from 'react';
-import type { DayPoint } from '@/lib/queries';
+import type { DayPoint } from '@/lib/local/selectors';
 import { fmtDayShort, fmtMoney } from '@/lib/money';
 
 /**

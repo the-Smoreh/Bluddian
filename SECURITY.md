@@ -1,127 +1,116 @@
 # Security
 
-This app holds your revenue history and the API keys to your money platforms.
-This document says exactly what protects them and — just as importantly — what
-doesn't.
+Bluddian has no server, no account, and no network calls that carry your data.
+That removes whole categories of risk — and creates a different, smaller set.
+This document is about both, including what is deliberately *not* protected.
+
+## What changed by removing the server
+
+The previous version of this app ran a backend, which meant it needed rate
+limiting, CSRF tokens, session cookies, brute-force lockouts on a login
+endpoint, HMAC-verified webhooks, and SSRF containment on outbound calls.
+
+**None of that exists any more, because none of it is needed.** There is no
+endpoint to flood, no session to steal, no cookie to forge, and no origin to
+attack. A denial-of-service attack against this app is indistinguishable from
+turning your own phone off.
+
+What's left is the one thing that still matters: someone with physical access to
+your unlocked phone, or to a copy of its storage.
 
 ## Threat model
 
-Assumed: a single trusted user (you), on an internet-reachable server, facing
-opportunistic internet-wide attackers rather than someone specifically targeting
-you. Bots that scan for exposed dashboards, credential stuffing, and drive-by
-CSRF are the realistic risks.
+**Defended against:**
 
-**Explicitly out of scope:** an attacker with filesystem access to the server, or
-a compromised phone. Both of those end the game regardless of what this code does
-— the encryption key lives in the environment on the same box as the database, so
-root reads both.
+- Someone picking up your phone and opening the app.
+- Someone who extracts the app's raw IndexedDB contents (via a backup, a forensic
+  tool, or malware with storage access) and tries to read your revenue history
+  or API keys offline.
+- Casual PIN guessing on the handset.
 
----
+**Explicitly NOT defended against:**
 
-## What protects the API keys
+- **A compromised or rooted device.** Malware with the ability to read process
+  memory or hook the page can take the key while the app is unlocked. No
+  browser-based app can defend against this.
+- **Someone who knows your PIN**, if you haven't enabled fingerprint unlock.
+- **Shoulder-surfing** your PIN entry.
+- **Loss.** If you lose the phone and have no backup, the data is gone. This is
+  a consequence of nothing being uploaded, not an oversight.
 
-**Encrypted at rest.** Every stored credential is AES-256-GCM under
-`APP_ENCRYPTION_KEY`, a 32-byte key from the environment. GCM is authenticated,
-so a tampered or wrong-key blob fails loudly instead of decrypting to garbage.
+## How the encryption works
 
-**No read-back path.** There is no endpoint that returns a plaintext credential.
-The only client-facing shape (`listCredentials()`) returns a 4-character hint and
-cannot structurally contain a secret. Once a key is saved you can replace it or
-delete it — you cannot retrieve it, and neither can anyone who takes over your
-session.
+```
+DEK  (random 256-bit AES-GCM key)  ──encrypts──>  the entire database
+ │
+ ├── wrapped by  KEK_bio   ← HKDF( WebAuthn PRF secret )
+ └── wrapped by  KEK_pin   ← PBKDF2-SHA256( your PIN, 600,000 rounds )
+```
 
-**Import barrier.** `src/lib/credentials.ts` imports `server-only`, so any
-attempt to pull it into a client component is a build failure rather than a
-silent bundle leak.
+Two independently wrapped copies of the **same** data key. Consequences worth
+knowing:
 
-**Never logged.** The audit log records *which field* changed, never any part of
-a value. Upstream error bodies are truncated before surfacing, since they can
-echo request data.
+- Either factor unlocks the vault.
+- Adding or removing fingerprint unlock never re-encrypts your database — only
+  a 32-byte key gets re-wrapped, so it's instant regardless of history size.
+- Changing your PIN is likewise instant.
+- **Losing both factors means losing the data**, permanently. There is no
+  recovery path, because there is no server holding a spare.
 
-**Env beats database.** A credential supplied by environment variable wins over
-one stored through the UI, so a platform-injected secret can't be silently
-overridden by someone who reaches the settings screen.
+### Fingerprint unlock is real decryption
 
-## What protects the account
+It uses the **WebAuthn PRF extension**, which makes the authenticator derive a
+stable secret from a credential held in the phone's secure element. That secret
+cannot be extracted from the hardware, and it's what unwraps the data key. This
+is materially different from apps that show a fingerprint prompt and then just
+decide whether to render the screen — that kind of check can be bypassed by
+anyone who can read the storage directly. This one cannot.
+
+If your device doesn't support PRF, enrolment **fails loudly** rather than
+leaving you with a button that silently protects nothing.
+
+### Why PBKDF2 at 600,000 rounds
+
+A 6-digit PIN is only a million possibilities. If someone dumps your IndexedDB
+and attacks the blob on their own hardware, the on-device lockout is irrelevant
+— they aren't using your phone. The only thing standing there is the cost per
+guess, which is why the derivation is deliberately slow. Use a longer PIN if you
+want more margin; the field accepts up to 12 digits.
+
+### API keys
+
+Any third-party credentials you enter are stored **inside** the encrypted
+database blob, so they inherit the same protection automatically. There is no
+separate keystore to get wrong. They are excluded from backup exports.
+
+In practice this app needs very few keys, because the CSV-import design means
+Whop and Shopify data arrives without any credential at all.
+
+## Other protections
 
 | Control | Detail |
 |---|---|
-| Password hashing | scrypt, N=2^15 (~32 MiB per hash), 16-byte random salt, constant-time compare |
-| Session tokens | 32 random bytes; the database stores only a SHA-256, so a stolen sessions table can't be replayed |
-| Cookies | `httpOnly`, `Secure`, `SameSite=Lax`, `__Host-` prefix in production (no Domain attribute, so no subdomain can write one) |
-| Two-factor | TOTP, ±1 step drift; the secret is only persisted after a valid code proves the authenticator stored it |
-| Password change | Requires the current password, then invalidates every session |
-| Setup | Closes permanently after one account; gated behind `SETUP_CODE` while open |
-| User enumeration | An unknown email runs a dummy scrypt verify, so it costs the same time as a known one |
-
-## What protects against abuse
-
-**Rate limiting** is a token bucket persisted in SQLite — deliberately not
-in-memory, because a memory bucket turns "restart the server" into a
-brute-force reset button.
-
-| Bucket | Budget | Rationale |
-|---|---|---|
-| Login | 8 / 15 min | Then ~2 min per further attempt |
-| TOTP | 10 / 5 min | A 6-digit space needs its own hard ceiling |
-| Setup | 5 / hour | First-run land-grab |
-| Sync | 10 / 5 min | Each call costs real money upstream — this is the endpoint that could be turned into a billing attack |
-| Writes | 60 / min | |
-| Reads | 120 / min | |
-| Webhooks | 120 / min | Higher; they're HMAC-verified anyway |
-
-Buckets key on client IP. `TRUST_PROXY` is **off** by default: trusting
-`X-Forwarded-For` unconditionally would let anyone mint a fresh bucket per
-request by spoofing the header, defeating the limiter entirely. Turn it on only
-when something you control is rewriting that header.
-
-**CSRF** is double-submit plus origin checking. The session holds a secret that's
-also set in a readable cookie; mutating requests must echo it in a header. A
-cross-origin page can make the browser send your cookies but cannot read them to
-set the header. `Sec-Fetch-Site` and `Origin` are checked too, which catches
-plain cross-site form posts that never run JS.
-
-**Request limits.** JSON bodies are capped at 256 KB, checked against both the
-declared `Content-Length` and the actual byte count, since the header can lie or
-be absent.
-
-**Webhooks** verify an HMAC over the **raw** body before any parsing, compare in
-constant time, and return 503 rather than accepting anything when no secret is
-configured. The Whop verifier enforces a 5-minute timestamp window where the
-signature format carries one, which makes captured requests unusable as replays.
-
-**Outbound requests** go through one hardened path: HTTPS only, a host allowlist,
-no redirect following (a 302 is the classic way out of an allowlist), a 15s
-timeout, and a 5 MB response cap. The Shopify shop domain is validated against a
-strict pattern before it's used as a request host.
-
-## Browser-side
-
-A nonce-based CSP is set per-request in middleware, with `strict-dynamic` for
-scripts and **no** `unsafe-inline` for scripts. `connect-src` is `'self'` only —
-the page never talks to a third party. Plus `frame-ancestors 'none'`, HSTS,
-`nosniff`, `Referrer-Policy: no-referrer`, and a restrictive `Permissions-Policy`.
-
-The service worker **never caches `/api/*`** or the auth pages. Caching
-authenticated responses is a standard way for a PWA to leak data to whoever picks
-up the phone next; page navigations are network-first so numbers are never stale.
-
-The app is marked `noindex, nofollow`.
-
----
+| At-rest encryption | AES-256-GCM, authenticated — a wrong key or tampered blob fails loudly rather than yielding garbage |
+| On-device lockout | Escalating delays after repeated wrong PINs: 30s → 5min → 30min → 1hr |
+| Auto-lock | Configurable inactivity timeout, default 15 minutes; the key is dropped from memory |
+| Lock on reload | The key is never persisted, so any refresh or app restart requires unlocking again |
+| Background flush | Data is written encrypted when the app is hidden, since Android can kill a background tab without warning |
+| Service worker | Caches app code only. Your data never traverses it — it isn't fetched over the network at all |
+| No telemetry | The app makes no outbound requests of any kind |
+| `noindex` | Marked against search indexing |
 
 ## Your responsibilities
 
-1. **Use HTTPS.** Secure cookies and service workers both require it.
-2. **Turn on two-factor.** It's in Settings and takes about thirty seconds.
-3. **Back up the database file** — it's the only copy of your history.
-4. **Keep `APP_ENCRYPTION_KEY` safe and unchanged.** Changing it makes stored keys
-   unreadable.
-5. **Scope your API keys** to read-only wherever the platform allows it. Nothing
-   here needs write access to your stores.
-6. **Rotate any key that was ever committed to git.** Deleting the commit is not
-   enough — forks and caches keep it.
+1. **Turn on fingerprint unlock.** It's stronger than the PIN and faster to use.
+2. **Write your recovery PIN down** somewhere physical. There is no reset.
+3. **Export a backup periodically.** One device is one point of failure.
+4. **Install to the home screen**, so Android grants persistent storage and stops
+   evicting your data under pressure. Settings warns you if this is pending.
+5. **Keep the recovery backup somewhere private** — it's unencrypted JSON.
+6. **Keep your phone's own screen lock on.** It's the outer layer this all sits
+   behind.
 
 ## Reporting
 
-It's your app. If you find a problem in it, fix it or ask Claude to.
+It's your app, running on your phone. If you find a problem in it, fix it or ask
+Claude to.
